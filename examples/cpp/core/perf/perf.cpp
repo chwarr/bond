@@ -70,34 +70,22 @@ perf_test(const std::vector<char>& inputBuffer, size_t iterations)
 {
     // Deserialize the object to serialize from the provided buffer
     bond::blob input(&inputBuffer[0], static_cast<uint32_t>(inputBuffer.size()));
-    bond::CompactBinaryReader<bond::InputBuffer> reader(input);
-
-    Compat obj;
-    Deserialize(reader, obj);
-
-    // In order to avoid testing speed of memory allocation, allocate
-    // one output buffer and re-use it.
-
-    // OutputBuffer wants to participate in shared ownership, so we need
-    // a shared_ptr here instead of just a vector.
-    const size_t outputBufferSize = 2 * inputBuffer.size();
-    boost::shared_ptr<char[]> outputBuffer = boost::make_shared_noinit<char[]>(outputBufferSize);
 
     {
-        // Do one serialization outside of timing in case anything needs
-        // to be warmed up. (e.g., page in serialization code)
-        bond::OutputBuffer b(outputBuffer, static_cast<uint32_t>(outputBufferSize));
-        bond::CompactBinaryWriter<bond::OutputBuffer> writer(b);
-        Serialize(obj, writer);
+        // Do one deserialization outside of timing in case anything needs
+        // to be warmed up. (e.g., page in deserialization code)
+        bond::CompactBinaryReader<bond::InputBuffer> reader(input);
+        Compat obj;
+        Deserialize(reader, obj);
     }
 
     const auto start = std::chrono::high_resolution_clock::now();
 
     for (size_t i = 0; i < iterations; ++i)
     {
-        bond::OutputBuffer b(outputBuffer, static_cast<uint32_t>(outputBufferSize));
-        bond::CompactBinaryWriter<bond::OutputBuffer> writer(b);
-        Serialize(obj, writer);
+        bond::CompactBinaryReader<bond::InputBuffer> reader(input);
+        Compat obj;
+        Deserialize(reader, obj);
     }
 
     const auto end = std::chrono::high_resolution_clock::now();
