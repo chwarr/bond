@@ -1,3 +1,4 @@
+#include "allocator.h"
 #include "compat_apply.h"
 #include "compat_reflection.h"
 
@@ -68,6 +69,8 @@ std::vector<char> read_from_file(const char* const inputPath)
 std::chrono::high_resolution_clock::duration
 perf_test(const std::vector<char>& inputBuffer, size_t iterations)
 {
+    typedef PoolAlloc::rebind<Compat>::other CompatAlloc;
+
     // Deserialize the object to serialize from the provided buffer
     bond::blob input(&inputBuffer[0], static_cast<uint32_t>(inputBuffer.size()));
 
@@ -75,8 +78,14 @@ perf_test(const std::vector<char>& inputBuffer, size_t iterations)
         // Do one deserialization outside of timing in case anything needs
         // to be warmed up. (e.g., page in deserialization code)
         bond::CompactBinaryReader<bond::InputBuffer> reader(input);
-        Compat obj;
-        Deserialize(reader, obj);
+
+        Compat* pObj = CompatAlloc::allocate(1);
+        ::new (static_cast<void*>(pObj)) Compat();
+
+        Deserialize(reader, *pObj);
+
+        pObj->~Compat();
+        CompatAlloc::deallocate(pObj, 1);
     }
 
     const auto start = std::chrono::high_resolution_clock::now();
@@ -84,8 +93,14 @@ perf_test(const std::vector<char>& inputBuffer, size_t iterations)
     for (size_t i = 0; i < iterations; ++i)
     {
         bond::CompactBinaryReader<bond::InputBuffer> reader(input);
-        Compat obj;
-        Deserialize(reader, obj);
+
+        Compat* pObj = CompatAlloc::allocate(1);
+        ::new (static_cast<void*>(pObj)) Compat();
+
+        Deserialize(reader, *pObj);
+
+        pObj->~Compat();
+        CompatAlloc::deallocate(pObj, 1);
     }
 
     const auto end = std::chrono::high_resolution_clock::now();
@@ -105,7 +120,7 @@ int main(int argc, const char* argv[])
 
         std::vector<char> inputBuffer = read_from_file(inputPath);
 
-        auto testDuration = perf_test(inputBuffer, 10000);
+        auto testDuration = perf_test(inputBuffer, 10);
         auto testDurationMs = std::chrono::duration_cast<std::chrono::milliseconds>(testDuration);
 
         std::cout << "Took " << testDurationMs.count() << "ms" << std::endl;
