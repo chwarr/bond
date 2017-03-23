@@ -120,7 +120,7 @@ int main(int argc, const char* argv[])
 
         std::vector<char> inputBuffer = read_from_file(inputPath);
 
-        auto testDuration = perf_test(inputBuffer, 10);
+        auto testDuration = perf_test(inputBuffer, 100);
         auto testDurationMs = std::chrono::duration_cast<std::chrono::milliseconds>(testDuration);
 
         std::cout << "Took " << testDurationMs.count() << "ms" << std::endl;
