@@ -141,12 +141,6 @@ namespace bond { namespace ext { namespace gRPC {
             return *this;
         }
 
-        server_builder& SetOption(std::unique_ptr<grpc::ServerBuilderOption> option)
-        {
-            _grpcServerBuilder.SetOption(std::move(option));
-            return *this;
-        }
-
         /// Tries to bind this server to the given \p addr.
         ///
         /// It can be invoked multiple times.
