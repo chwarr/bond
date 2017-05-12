@@ -13,7 +13,10 @@ namespace detail {
     {
         virtual ~io_mgr_tag() { }
 
-        /// @brief Called this instance is dequeued from a completion queue.
+        /// @brief Called when this instance is dequeued from a completion
+        /// queue.
+        ///
+        /// @param ok whether or not the initial operation succeeded
         virtual void invoke(bool ok) = 0;
     };
 

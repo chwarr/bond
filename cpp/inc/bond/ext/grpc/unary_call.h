@@ -25,10 +25,12 @@ namespace bond { namespace ext { namespace gRPC {
 
 namespace detail {
 
-    /// @brief Implementation class that holds the state associated with a single async, unary
-    /// call. It manages its own lifetime: to send a response, it enques
-    /// itself in the completion queue. When that sending of the response is
-    /// done and it is dequed from the completion queue, it deletes itself.
+    /// @brief Implementation class that holds the state associated with a
+    /// single async, unary call.
+    ///
+    /// It manages its own lifetime: to send a response, it enques itself in
+    /// the completion queue. When that sending of the response is done and
+    /// it is dequed from the completion queue, it deletes itself.
     template <typename TRequest, typename TResponse>
     struct unary_call_impl final : detail::io_mgr_tag
     {
@@ -73,10 +75,15 @@ namespace detail {
 
 }
 
-/// @brief The details of a single async, unary call. Call
-/// Finish/FinishWithError to send a response back to the cleint. This class
-/// can only be moved. If no explicit call to Finish/FinishWithError has
-/// been made, a generic internal server error.
+/// @brief The details of a single async, unary call.
+///
+/// Call \p Finish or \p FinishWithError to send a response back to the
+/// client.
+///
+/// If no explicit call to Finish/FinishWithError has been made before this
+/// call is destroyed, a generic internal server error is sent.
+///
+/// \note This class can only be moved.
 template <typename TRequest, typename TResponse>
 class unary_call final
 {
@@ -121,33 +128,43 @@ public:
         swap(_impl, rhs._impl);
     }
 
+    /// @brief Get the server context for this call.
     const grpc::ServerContext& context() const
     {
         return _impl->_context;
     }
 
+    /// @brief Get the server context for this call.
     grpc::ServerContext& context()
     {
         return _impl->_context;
     }
 
+    /// @brief Get the request message for this call.
     const TRequest& request() const
     {
         return _impl->_request;
     }
 
+    /// @brief Get the request message for this call.
     TRequest& request()
     {
         return _impl->_request;
     }
 
     /// @brief Responds to the client with the given message and status.
+    ///
+    /// Only the first call to \p Finish or \p FinishWithError will be
+    /// honored.
     void Finish(const TResponse& msg, const grpc::Status& status)
     {
         _impl->Finish(msg, status);
     }
 
-    /// @brienf Responds to the client with the given status and no message.
+    /// @brief Responds to the client with the given status and no message.
+    ///
+    /// Only the first call to \p Finish or \p FinishWithError will be
+    /// honored.
     void FinishWithError(const grpc::Status& status)
     {
         _impl->FinishWithError(status);
@@ -156,6 +173,14 @@ public:
 private:
     detail::unary_call_impl<TRequest, TResponse>* _impl;
 
+    /// Resets the underlying detail::unary_call_impl that this is wrapping.
+    /// If the previous \p _impl was non-null, attempts to send an internal
+    /// server error.
+    ///
+    /// By always sending something back we get two benefits:
+    ///    - the client will get some sort of response instead of having to
+    ///      wait for a timeout
+    ///    - resources will be cleaned up after the response has been sent
     void reset(detail::unary_call_impl<TRequest, TResponse>* newValue)
     {
         auto oldValue = _impl;

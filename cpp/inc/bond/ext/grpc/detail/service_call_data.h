@@ -18,7 +18,7 @@
 #endif
 
 #include <bond/ext/grpc/io_mgr.h>
-#include <bond/ext/grpc/service.h>
+#include <bond/ext/grpc/detail/service.h>
 #include <bond/ext/grpc/unary_call.h>
 
 #include <boost/assert.hpp>
@@ -28,22 +28,38 @@
 
 namespace bond { namespace ext { namespace gRPC { namespace detail {
 
+/// @brief Implementation class that hold the state associated with
+/// receiving incomming calls for one method.
+///
+/// There only needs to be one of these per method in a service, and it can
+/// be re-used for receiveing subsequent calls. A new
+/// detail::unary_call_impl is created for each individual call to hold the
+/// call-specific data. Once the detail::unary_call_impl has been dispatched
+/// to the user callback, detail::unary_call_impl is in charge of its own
+/// lifetime, and detail::service_unary_call_data re-enqueues itself to get
+/// the next call.
 template <typename TRequest, typename TResponse>
 struct service_unary_call_data : io_mgr_tag
 {
-    typedef std::function<void(unary_call<TRequest, TResponse> call)> CBType;
+    typedef std::function<void(unary_call<TRequest, TResponse> call)> CallbackType;
 
+    /// The service implementing the method.
     service* _service;
+    /// The index of the method. Method indices correspond to the order in
+    /// which they were registered with detail::service::AddMethod
     int _methodIndex;
+    /// The completion port to post IO operations to.
     grpc::ServerCompletionQueue* _cq;
-    CBType _cb;
+    /// The user code to invoke when a call to this method is received.
+    CallbackType _cb;
+    /// Individual state for one specific call to this method.
     std::unique_ptr<unary_call_impl<TRequest, TResponse>> _receivedCall;
 
     service_unary_call_data(
         service* service,
         int methodIndex,
         grpc::ServerCompletionQueue* cq,
-        CBType cb)
+        CallbackType cb)
         : _service(service),
           _methodIndex(methodIndex),
           _cq(cq),

@@ -1,14 +1,14 @@
+#include <bond/ext/grpc/detail/service.h>
 #include <bond/ext/grpc/detail/service_call_data.h>
 #include <bond/ext/grpc/server.h>
 #include <bond/ext/grpc/server_builder.h>
-#include <bond/ext/grpc/service.h>
 #include <bond/ext/grpc/unary_call.h>
 
 #include <bond/ext/grpc/bond_utils.h>
 
 
 // TODO: generate this code instead of writing it by hand
-class GreeterServiceAsync : public bond::ext::gRPC::service
+class GreeterServiceAsync : public bond::ext::gRPC::detail::service
 {
 public:
     GreeterServiceAsync()

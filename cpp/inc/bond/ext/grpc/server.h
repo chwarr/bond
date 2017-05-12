@@ -56,9 +56,9 @@
 
 namespace bond { namespace ext { namespace gRPC {
 
-    /// Models a gRPC server powered by Bond services
+    /// @brief Models a gRPC server powered by Bond services.
     ///
-    /// Servers are configured and started via \a
+    /// Servers are configured and started via
     /// bond::ext:gRPC::server_builder.
     class server final
     {
@@ -82,10 +82,12 @@ namespace bond { namespace ext { namespace gRPC {
         server(server&&) = default;
         server& operator=(server&&) = default;
 
-        /// Shutdown the server, blocking until all rpc processing finishes.
-        /// Forcefully terminate pending calls after \a deadline expires.
+        /// @brief Shutdown the server, blocking until all rpc processing
+        /// finishes.
         ///
-        /// \param deadline How long to wait until pending rpcs are forcefully
+        /// Forcefully terminate pending calls after \p deadline expires.
+        ///
+        /// @param deadline How long to wait until pending rpcs are forcefully
         /// terminated.
         template <class T>
         void Shutdown(const T& deadline)
@@ -101,10 +103,10 @@ namespace bond { namespace ext { namespace gRPC {
             _cq->Shutdown();
         }
 
-        /// Block waiting for all work to complete.
+        /// @brief Block waiting for all work to complete.
         ///
-        /// \warning The server must be either shutting down or some other
-        /// thread must call \a Shutdown for this function to ever return.
+        /// @warning The server must be either shutting down or some other
+        /// thread must call \p Shutdown for this function to ever return.
         void Wait()
         {
             _grpcServer->Wait();
@@ -139,11 +141,12 @@ namespace bond { namespace ext { namespace gRPC {
         void start()
         {
             // TODO: replace with an io_mgr class
-            _ioThread.emplace([this]()
+            grpc::CompletionQueue* cq = _cq.get();
+            _ioThread.emplace([cq]()
             {
                 void* tag;
                 bool ok;
-                while (_cq->Next(&tag, &ok))
+                while (cq->Next(&tag, &ok))
                 {
                     BOOST_ASSERT(tag);
                     static_cast<detail::io_mgr_tag*>(tag)->invoke(ok);

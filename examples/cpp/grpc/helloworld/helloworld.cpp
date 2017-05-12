@@ -17,7 +17,6 @@
 
 #include <bond/ext/grpc/server.h>
 #include <bond/ext/grpc/server_builder.h>
-#include <bond/ext/grpc/service.h>
 #include <bond/ext/grpc/unary_call.h>
 
 using grpc::Channel;

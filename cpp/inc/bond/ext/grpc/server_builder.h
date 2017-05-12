@@ -48,6 +48,7 @@
 #endif
 
 #include <bond/ext/grpc/server.h>
+#include <bond/ext/grpc/detail/service.h>
 
 #include <boost/assert.hpp>
 #include <memory>
@@ -55,16 +56,16 @@
 
 namespace bond { namespace ext { namespace gRPC {
 
-    /// A builder class for the creation and startup of \a
+    /// @brief A builder class for the creation and startup of \a
     /// bond::ext::gRPC::server instances.
     class server_builder final {
     public:
-        /// Register a service. This call does not take ownership of the service.
-        /// The service must exist for the lifetime of the \a server instance
-        /// returned by \a BuildAndStart().
+        /// Register a service. This call does not take ownership of the
+        /// service. The service must exist for the lifetime of the \p
+        /// server instance returned by \p BuildAndStart().
         ///
         /// Matches requests with any :authority
-        server_builder& RegisterService(service* service)
+        server_builder& RegisterService(detail::service* service)
         {
             BOOST_ASSERT(service);
             _grpcServerBuilder.RegisterService(service->grpc_service());
@@ -73,12 +74,12 @@ namespace bond { namespace ext { namespace gRPC {
             return *this;
         }
 
-        /// Register a service. This call does not take ownership of the service.
-        /// The service must exist for the lifetime of the \a Server instance
-        /// returned by BuildAndStart().
+        /// Register a service. This call does not take ownership of the
+        /// service. The service must exist for the lifetime of the \p
+        /// server instance returned by BuildAndStart().
         ///
-        /// Only matches requests with :authority \a host
-        server_builder& RegisterService(const grpc::string& host, service* service)
+        /// Only matches requests with :authority \p host
+        server_builder& RegisterService(const grpc::string& host, detail::service* service)
         {
             BOOST_ASSERT(service);
             _grpcServerBuilder.RegisterService(host, service->grpc_service());
@@ -101,8 +102,9 @@ namespace bond { namespace ext { namespace gRPC {
             return *this;
         }
 
-        /// Set the support status for compression algorithms. All algorithms are
-        /// enabled by default.
+        /// @brief Set the support status for compression algorithms.
+        ///
+        /// All algorithms are enabled by default.
         ///
         /// Incoming calls compressed with an unsupported algorithm will fail with
         /// GRPC_STATUS_UNIMPLEMENTED.
@@ -124,7 +126,7 @@ namespace bond { namespace ext { namespace gRPC {
 
         /// The default compression algorithm to use for all channel calls in the
         /// absence of a call-specific level. Note that it overrides any
-        /// compression level set by \a SetDefaultCompressionLevel.
+        /// compression level set by \p SetDefaultCompressionLevel.
         server_builder& SetDefaultCompressionAlgorithm(
             grpc_compression_algorithm algorithm)
         {
@@ -132,7 +134,7 @@ namespace bond { namespace ext { namespace gRPC {
             return *this;
         }
 
-        /// Set the attached buffer pool for this server
+        /// Set the attached buffer pool for this server.
         server_builder& SetResourceQuota(const grpc::ResourceQuota& resource_quota)
         {
             _grpcServerBuilder.SetResourceQuota(resource_quota);
@@ -145,15 +147,15 @@ namespace bond { namespace ext { namespace gRPC {
             return *this;
         }
 
-        /// Tries to bind \a server to the given \a addr.
+        /// Tries to bind this server to the given \p addr.
         ///
         /// It can be invoked multiple times.
         ///
-        /// \param addr The address to try to bind to the server (eg,
+        /// @param addr The address to try to bind to the server (eg,
         /// localhost:1234, 192.168.1.1:31416, [::1]:27182, etc.).
-        /// \params creds The credentials associated with the server.
-        /// \param selected_port[out] Upon success, updated to contain the port
-        /// number. \a nullptr otherwise.
+        /// @param creds The credentials associated with the server.
+        /// @param[out] selected_port Upon success, updated to contain the port
+        /// number. \p nullptr otherwise.
         server_builder& AddListeningPort(
             const grpc::string& addr,
             std::shared_ptr<grpc::ServerCredentials> creds,
@@ -189,7 +191,7 @@ namespace bond { namespace ext { namespace gRPC {
 
     private:
         grpc::ServerBuilder _grpcServerBuilder;
-        std::set<service*> _services;
+        std::set<detail::service*> _services;
     };
 
 } } } // namespace bond::ext::gRPC

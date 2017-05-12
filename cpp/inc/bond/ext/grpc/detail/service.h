@@ -18,16 +18,16 @@
 
 #include <boost/assert.hpp>
 
-namespace bond { namespace ext { namespace gRPC {
+namespace bond { namespace ext { namespace gRPC { namespace detail {
 
-namespace detail {
-    struct io_mgr_tag;
-}
+struct io_mgr_tag;
 
-/// @brief Base class that all Bond gRPC++ services implement
+/// @brief Base class that all Bond gRPC++ services implement.
 ///
-/// This is helper class that codegen uses to generate abstract service
-/// classes, which a bond::ext::gRPC::server then hosts multiple services.
+/// @note This class is for use by generated and helper code only.
+///
+/// Helper class that codegen uses to generate abstract service classes,
+/// which a bond::ext::gRPC::server then hosts multiple services.
 class service : private grpc::Service
 {
 public:
@@ -35,14 +35,18 @@ public:
 
     /// @brief Starts the service.
     ///
+    /// @note This method is for use by generated and helper code only.
+    ///
     /// Typical implementations call queue_receive on all the methods in the
     /// service to kick of the process of receiveing messages.
     virtual void start(grpc::ServerCompletionQueue* cq) = 0;
 
-    /// @brief Starts the receive process for a method
+    /// @brief Starts the receive process for a method.
     ///
-    /// This method is typically only called by generated code and helper
-    /// code.
+    /// @note This method is for use by generated and helper code only.
+    ///
+    /// When a request for the method has been received, \p tag will be
+    /// added to \p cq.
     ///
     /// @param methodIndex the index of the method (indices are assigned by
     /// the order in which the methods are registered via calls to
@@ -80,7 +84,7 @@ public:
 
     /// @brief Provides access to the raw grpc::Service type.
     ///
-    /// For use by library code.
+    /// @note This method is for use by generated and helper code only.
     grpc::Service* grpc_service()
     {
         return this;
@@ -89,7 +93,7 @@ public:
 protected:
     /// @brief Registers a method name for dispatch to this service.
     ///
-    /// This is usually called by generated code.
+    /// @note This method is for use by generated and helper code only.
     ///
     /// The order in which methods are registered assigned the method index,
     /// which is used elsewhere.
@@ -109,4 +113,4 @@ private:
     using grpc::Service::AddMethod;
 };
 
-} } } //namespace bond::ext::gRPC
+} } } } //namespace bond::ext::gRPC::detail
