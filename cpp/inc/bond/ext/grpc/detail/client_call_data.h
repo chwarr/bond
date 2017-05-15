@@ -1,0 +1,78 @@
+// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+#pragma once
+
+#ifdef _MSC_VER
+    #pragma warning (push)
+    #pragma warning (disable: 4100 4702)
+#endif
+
+#include <grpc++/grpc++.h>
+#include <grpc++/impl/codegen/rpc_method.h>
+#include <grpc++/impl/codegen/service_type.h>
+#include <grpc++/impl/codegen/status.h>
+
+#ifdef _MSC_VER
+    #pragma warning (pop)
+#endif
+
+#include <bond/ext/grpc/detail/cq_poller.h>
+#include <bond/ext/grpc/detail/service.h>
+#include <bond/ext/grpc/unary_call.h>
+
+#include <boost/assert.hpp>
+#include <functional>
+#include <memory>
+#include <thread>
+
+namespace bond { namespace ext { namespace gRPC { namespace detail {
+
+/// @brief Implementation class that hold the state associated with
+/// outgoing incomming calls.
+template <typename TRequest, typename TResponse>
+struct client_unary_call_data : cq_poller_tag
+{
+    typedef std::function<void(TResponse)> CallbackType;
+
+    /// The user code to invoke when a response is received.
+    CallbackType _cb;
+    TResponse _response;
+    grpc::Status _status;
+
+    client_unary_call_data(
+        CallbackType cb)
+        : _cb(cb),
+        _response(),
+        _status()
+    {
+        BOOST_ASSERT(cb);
+    }
+
+    void dispatch(grpc::ChannelInterface* channel, ::grpc::CompletionQueue* cq, grpc::RpcMethod method, grpc::ClientContext* context, TRequest request)
+    {
+        auto responseReader = new ::grpc::ClientAsyncResponseReader< ::bond::comm::message< ::helloworld::HelloReply>>(channel, cq, method, context, request);
+        responseReader->Finish(&_response, &_status, (void*)this);
+    }
+
+    void invoke(bool ok) override
+    {
+        if (ok)
+        {
+            // TODO: switch to thread pool
+            // TODO: use queuing policy here after switching to thread pool
+            std::thread([this]()
+            {
+                _cb(_response);
+
+                delete this;
+            }).detach();
+        }
+        else
+        {
+            delete this;
+        }
+    }
+};
+
+} } } } //namespace bond::ext::gRPC::detail

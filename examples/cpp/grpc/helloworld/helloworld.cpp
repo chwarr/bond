@@ -1,6 +1,8 @@
 #include "helloworld_types.h"
 #include "helloworld_grpc.h"
 
+#include "helloworld_proxy.h"
+
 #ifdef _MSC_VER
     #pragma warning (push)
     #pragma warning (disable: 4100)
@@ -16,6 +18,8 @@
 #include <bond/ext/grpc/server_builder.h>
 #include <bond/ext/grpc/unary_call.h>
 
+#include <bond/ext/detail/event.h>
+
 using grpc::Channel;
 using grpc::ClientContext;
 using grpc::Status;
@@ -24,40 +28,9 @@ using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
 
+using bond::ext::detail::event;
+
 using namespace helloworld;
-
-class GreeterClient {
- public:
-  GreeterClient(std::shared_ptr<Channel> channel)
-      : stub_(Greeter::NewStub(channel)) {}
-
-  // Assembles the client's payload, sends it and presents the response back
-  // from the server.
-  std::string SayHello(const std::string& user) {
-    ClientContext context;
-
-    HelloRequest request;
-    request.name = user;
-
-    HelloReply reply;
-
-    // The actual RPC.
-    bond::comm::message<HelloRequest> req(request);
-    bond::comm::message<HelloReply> rep;
-    Status status = stub_->SayHello(&context, req, &rep);
-
-    if (status.ok()) {
-      return rep.value().Deserialize().message;
-    } else {
-      std::cout << status.error_code() << ": " << status.error_message()
-                << std::endl;
-      return "RPC failed";
-    }
-  }
-
- private:
-  std::unique_ptr<Greeter::Stub> stub_;
-};
 
 // Logic and data behind the server's behavior.
 class GreeterServiceImpl final : public Greeter::Service {
@@ -75,6 +48,20 @@ class GreeterServiceImpl final : public Greeter::Service {
     }
 };
 
+void printAndSet(event* print_event, ::bond::comm::message< ::helloworld::HelloReply> response) {
+    std::string message = response.value().Deserialize().message;
+
+    if (message.compare(std::string("hello world")) == 0)
+    {
+        std::cout << "Correct response: " << message;
+        print_event->set();
+    }
+    else
+    {
+        std::cout << "Wrong response";
+    }
+}
+
 int main()
 {
     const std::string server_address("127.0.0.1:50051");
@@ -85,17 +72,28 @@ int main()
     builder.RegisterService(&service);
     std::unique_ptr<bond::ext::gRPC::server> server(builder.BuildAndStart());
 
-    GreeterClient greeter(grpc::CreateChannel(server_address, grpc::InsecureChannelCredentials()));
-    std::string user("world");
-    std::string reply = greeter.SayHello(user);
+    std::unique_ptr<grpc::CompletionQueue> cq_(new grpc::CompletionQueue());
+    grpc::CompletionQueue* cq_ptr = cq_.get();
 
-    if (strcmp(reply.c_str(), "hello world") == 0)
-    {
+    helloworld::Greeter2::GreeterClient greeter(grpc::CreateChannel(server_address, grpc::InsecureChannelCredentials()), std::move(cq_));
+    greeter.start();
+
+    ClientContext context;
+
+    std::string user("world");
+    HelloRequest request;
+    request.name = user;
+    bond::comm::message<HelloRequest> req(request);
+    event print_event;
+
+    std::function<void(::bond::comm::message< ::helloworld::HelloReply>)> f_print = [&print_event](::bond::comm::message< ::helloworld::HelloReply> response) { printAndSet(&print_event, response); };
+
+    greeter.AsyncSayHello(&context, req, cq_ptr, f_print);
+
+    bool waitResult = print_event.wait(std::chrono::seconds(10));
+
+    if (waitResult)
         return 0;
-    }
     else
-    {
-        std::cout << "Did not receive correct response. received: " << reply;
         return 1;
-    }
 }
