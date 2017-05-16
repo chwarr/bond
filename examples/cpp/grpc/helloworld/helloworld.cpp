@@ -14,11 +14,11 @@
     #pragma warning (pop)
 #endif
 
+#include <bond/ext/detail/event.h>
+#include <bond/ext/grpc/io_manager.h>
 #include <bond/ext/grpc/server.h>
 #include <bond/ext/grpc/server_builder.h>
 #include <bond/ext/grpc/unary_call.h>
-
-#include <bond/ext/detail/event.h>
 
 using grpc::Channel;
 using grpc::ClientContext;
@@ -29,6 +29,7 @@ using grpc::ServerBuilder;
 using grpc::ServerContext;
 
 using bond::ext::detail::event;
+using bond::ext::gRPC::io_manager;
 
 using namespace helloworld;
 
@@ -36,8 +37,8 @@ using namespace helloworld;
 class GreeterServiceImpl final : public Greeter::Service {
     void SayHello(
         bond::ext::gRPC::unary_call<
-            bond::comm::message<::helloworld::HelloRequest>,
-            bond::comm::message<::helloworld::HelloReply>> call) override
+            bond::comm::message<HelloRequest>,
+            bond::comm::message<HelloReply>> call) override
     {
         HelloReply real_reply;
         real_reply.message = "hello " + call.request().value().Deserialize().name;
@@ -48,18 +49,24 @@ class GreeterServiceImpl final : public Greeter::Service {
     }
 };
 
-void printAndSet(event* print_event, ::bond::comm::message< ::helloworld::HelloReply> response) {
-    std::string message = response.value().Deserialize().message;
+void printAndSet(event* print_event, bool* isCorrectResponse, const bond::comm::message< HelloReply>& response, const Status& status) {
+    if(status.ok())
+    {
+        std::string message = response.value().Deserialize().message;
 
-    if (message.compare(std::string("hello world")) == 0)
-    {
-        std::cout << "Correct response: " << message;
-        print_event->set();
+        if (message.compare(std::string("hello world")) == 0)
+        {
+            std::cout << "Correct response: " << message;
+            *isCorrectResponse = true;
+        }
+        else
+        {
+            std::cout << "Wrong response";
+            *isCorrectResponse = false;
+        }
     }
-    else
-    {
-        std::cout << "Wrong response";
-    }
+
+    print_event->set();
 }
 
 int main()
@@ -75,7 +82,9 @@ int main()
     std::unique_ptr<grpc::CompletionQueue> cq_(new grpc::CompletionQueue());
     grpc::CompletionQueue* cq_ptr = cq_.get();
 
-    helloworld::Greeter2::GreeterClient greeter(grpc::CreateChannel(server_address, grpc::InsecureChannelCredentials()), std::move(cq_));
+    std::shared_ptr<io_manager> ioManager(new io_manager(std::move(cq_)));
+
+    Greeter2::GreeterClient greeter(grpc::CreateChannel(server_address, grpc::InsecureChannelCredentials()), ioManager);
     greeter.start();
 
     ClientContext context;
@@ -85,14 +94,22 @@ int main()
     request.name = user;
     bond::comm::message<HelloRequest> req(request);
     event print_event;
+    bool isCorrectResponse;
 
-    std::function<void(::bond::comm::message< ::helloworld::HelloReply>)> f_print = [&print_event](::bond::comm::message< ::helloworld::HelloReply> response) { printAndSet(&print_event, response); };
+    std::function<void(const bond::comm::message< HelloReply>&, const Status&)> f_print =
+        [&print_event, &isCorrectResponse](bond::comm::message< HelloReply> response, Status status)
+        {
+            printAndSet(&print_event, &isCorrectResponse, response, status);
+        };
 
     greeter.AsyncSayHello(&context, req, cq_ptr, f_print);
 
     bool waitResult = print_event.wait(std::chrono::seconds(10));
 
-    if (waitResult)
+    if (!waitResult)
+        std::cout << "time out ocurred";
+
+    if (waitResult && isCorrectResponse)
         return 0;
     else
         return 1;

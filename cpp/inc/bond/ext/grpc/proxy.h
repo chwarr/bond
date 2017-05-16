@@ -14,12 +14,7 @@
     #pragma warning (pop)
 #endif
 
-#include <bond/ext/grpc/detail/cq_poller.h>
-
-#include <boost/assert.hpp>
-#include <boost/optional/optional.hpp>
-#include <memory>
-#include <thread>
+#include <bond/ext/grpc/io_manager.h>
 
 namespace bond { namespace ext { namespace gRPC {
 
@@ -28,9 +23,9 @@ namespace bond { namespace ext { namespace gRPC {
     class proxy
     {
     public:
-        proxy(std::unique_ptr<grpc::CompletionQueue> cq)
-            : _cqPoller(std::move(cq))
+        proxy(std::shared_ptr<io_manager> ioManager)
         {
+            _ioManager = ioManager;
         }
 
         ~proxy()
@@ -39,18 +34,16 @@ namespace bond { namespace ext { namespace gRPC {
             Wait();
         }
 
-        /*
         proxy(const proxy&) = delete;
         proxy& operator=(const proxy&) = delete;
 
         proxy(proxy&&) = default;
         proxy& operator=(proxy&&) = default;
-        */
 
         /// Shutdown the proxy, waiting for all rpc processing to finish.
         void Shutdown()
         {
-            _cqPoller.shutdown();
+            _ioManager->shutdown();
         }
 
         /// @brief Block waiting for all work to complete.
@@ -59,17 +52,16 @@ namespace bond { namespace ext { namespace gRPC {
         /// thread must call \p Shutdown for this function to ever return.
         void Wait()
         {
-            _cqPoller.wait();
+            _ioManager->wait();
         }
 
         void start()
         {
-            _cqPoller.start();
+            _ioManager->start();
         }
 
     private:
-
-        detail::cq_poller _cqPoller;
+        std::shared_ptr<io_manager> _ioManager;
     };
 
 } } } //namespace bond::ext::gRPC

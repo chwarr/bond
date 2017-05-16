@@ -23,6 +23,7 @@
 
 #include <bond/ext/grpc/proxy.h>
 #include <bond/ext/grpc/detail/client_call_data.h>
+#include <bond/ext/grpc/io_manager.h>
 
 namespace helloworld
 {
@@ -32,8 +33,8 @@ class Greeter2 final {
 
   class GreeterClient : public bond::ext::gRPC::proxy {
    public:
-    GreeterClient(const std::shared_ptr< ::grpc::ChannelInterface>& channel, std::unique_ptr< ::grpc::CompletionQueue> cq);
-    void AsyncSayHello(::grpc::ClientContext* context, const ::bond::comm::message< ::helloworld::HelloRequest>& request, ::grpc::CompletionQueue* cq, std::function<void(::bond::comm::message< ::helloworld::HelloReply>)> cb);
+    GreeterClient(const std::shared_ptr< ::grpc::ChannelInterface>& channel, std::shared_ptr< ::bond::ext::gRPC::io_manager> ioManager);
+    void AsyncSayHello(::grpc::ClientContext* context, const ::bond::comm::message< ::helloworld::HelloRequest>& request, ::grpc::CompletionQueue* cq, std::function<void(const ::bond::comm::message< ::helloworld::HelloReply>&, const ::grpc::Status&)> cb);
 
    private:
     std::shared_ptr< ::grpc::ChannelInterface> channel_;
@@ -45,14 +46,14 @@ static const char* Greeter_method_names[] = {
     "/helloworld.Greeter/SayHello",
 };
 
-Greeter2::GreeterClient::GreeterClient(const std::shared_ptr< ::grpc::ChannelInterface>& channel, std::unique_ptr< ::grpc::CompletionQueue> cq)
+Greeter2::GreeterClient::GreeterClient(const std::shared_ptr< ::grpc::ChannelInterface>& channel, std::shared_ptr< ::bond::ext::gRPC::io_manager> ioManager)
     : channel_(channel)
-    , bond::ext::gRPC::proxy(std::move(cq))
+    , bond::ext::gRPC::proxy(ioManager)
     , rpcmethod_SayHello_(Greeter_method_names[0], ::grpc::RpcMethod::NORMAL_RPC, channel)
   {}
 
 
-void Greeter2::GreeterClient::AsyncSayHello(::grpc::ClientContext* context, const ::bond::comm::message< ::helloworld::HelloRequest>& request, ::grpc::CompletionQueue* cq, std::function<void(::bond::comm::message< ::helloworld::HelloReply>)> cb) {
+void Greeter2::GreeterClient::AsyncSayHello(::grpc::ClientContext* context, const ::bond::comm::message< ::helloworld::HelloRequest>& request, ::grpc::CompletionQueue* cq, std::function<void(const ::bond::comm::message< ::helloworld::HelloReply>&, const ::grpc::Status&)> cb) {
   ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message< ::helloworld::HelloRequest> , ::bond::comm::message< ::helloworld::HelloReply> >* calldata = new ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message< ::helloworld::HelloRequest> , ::bond::comm::message< ::helloworld::HelloReply> >(cb);
   calldata->dispatch(channel_.get(), cq, rpcmethod_SayHello_, context, request);
 }

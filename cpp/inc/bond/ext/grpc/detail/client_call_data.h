@@ -17,7 +17,7 @@
     #pragma warning (pop)
 #endif
 
-#include <bond/ext/grpc/detail/cq_poller.h>
+#include <bond/ext/grpc/detail/io_manager_tag.h>
 #include <bond/ext/grpc/detail/service.h>
 #include <bond/ext/grpc/unary_call.h>
 
@@ -31,14 +31,15 @@ namespace bond { namespace ext { namespace gRPC { namespace detail {
 /// @brief Implementation class that hold the state associated with
 /// outgoing incomming calls.
 template <typename TRequest, typename TResponse>
-struct client_unary_call_data : cq_poller_tag
+struct client_unary_call_data : io_manager_tag
 {
-    typedef std::function<void(TResponse)> CallbackType;
+    typedef std::function<void(const TResponse&, const grpc::Status&)> CallbackType;
 
     /// The user code to invoke when a response is received.
     CallbackType _cb;
     TResponse _response;
     grpc::Status _status;
+    std::unique_ptr<grpc::ClientAsyncResponseReader<TResponse>> _responseReader;
 
     client_unary_call_data(
         CallbackType cb)
@@ -49,10 +50,15 @@ struct client_unary_call_data : cq_poller_tag
         BOOST_ASSERT(cb);
     }
 
-    void dispatch(grpc::ChannelInterface* channel, ::grpc::CompletionQueue* cq, grpc::RpcMethod method, grpc::ClientContext* context, TRequest request)
+    void dispatch(grpc::ChannelInterface* channel
+            , ::grpc::CompletionQueue* cq
+            , grpc::RpcMethod method
+            , grpc::ClientContext* context
+            , const TRequest& request)
     {
-        auto responseReader = new ::grpc::ClientAsyncResponseReader< ::bond::comm::message< ::helloworld::HelloReply>>(channel, cq, method, context, request);
-        responseReader->Finish(&_response, &_status, (void*)this);
+        _responseReader = std::unique_ptr<grpc::ClientAsyncResponseReader<TResponse>>(new ::grpc::ClientAsyncResponseReader<
+            ::bond::comm::message< ::helloworld::HelloReply>>(channel, cq, method, context, request));
+        _responseReader->Finish(&_response, &_status, (void*)this);
     }
 
     void invoke(bool ok) override
@@ -63,7 +69,7 @@ struct client_unary_call_data : cq_poller_tag
             // TODO: use queuing policy here after switching to thread pool
             std::thread([this]()
             {
-                _cb(_response);
+                _cb(_response, _status);
 
                 delete this;
             }).detach();
