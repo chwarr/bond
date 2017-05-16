@@ -51,13 +51,13 @@ struct client_unary_call_data : io_manager_tag
     }
 
     void dispatch(grpc::ChannelInterface* channel
-            , ::grpc::CompletionQueue* cq
+            , io_manager* ioManager
             , grpc::RpcMethod method
             , grpc::ClientContext* context
             , const TRequest& request)
     {
         _responseReader = std::unique_ptr<grpc::ClientAsyncResponseReader<TResponse>>(new ::grpc::ClientAsyncResponseReader<
-            ::bond::comm::message< ::helloworld::HelloReply>>(channel, cq, method, context, request));
+            ::bond::comm::message< ::helloworld::HelloReply>>(channel, ioManager->cq(), method, context, request));
         _responseReader->Finish(&_response, &_status, (void*)this);
     }
 

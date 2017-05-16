@@ -60,7 +60,7 @@ namespace bond { namespace ext { namespace gRPC {
             _ioManager->start();
         }
 
-    private:
+    protected:
         std::shared_ptr<io_manager> _ioManager;
     };
 

@@ -80,8 +80,6 @@ int main()
     std::unique_ptr<bond::ext::gRPC::server> server(builder.BuildAndStart());
 
     std::unique_ptr<grpc::CompletionQueue> cq_(new grpc::CompletionQueue());
-    grpc::CompletionQueue* cq_ptr = cq_.get();
-
     std::shared_ptr<io_manager> ioManager(new io_manager(std::move(cq_)));
 
     Greeter2::GreeterClient greeter(grpc::CreateChannel(server_address, grpc::InsecureChannelCredentials()), ioManager);
@@ -102,7 +100,7 @@ int main()
             printAndSet(&print_event, &isCorrectResponse, response, status);
         };
 
-    greeter.AsyncSayHello(&context, req, cq_ptr, f_print);
+    greeter.AsyncSayHello(&context, req, f_print);
 
     bool waitResult = print_event.wait(std::chrono::seconds(10));
 
