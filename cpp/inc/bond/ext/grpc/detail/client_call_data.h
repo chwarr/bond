@@ -50,11 +50,11 @@ struct client_unary_call_data : io_manager_tag
         BOOST_ASSERT(cb);
     }
 
-    void dispatch(grpc::ChannelInterface* channel
-            , io_manager* ioManager
-            , grpc::RpcMethod method
-            , grpc::ClientContext* context
-            , const TRequest& request)
+    void dispatch(grpc::ChannelInterface* channel,
+           io_manager* ioManager,
+           grpc::RpcMethod method,
+           grpc::ClientContext* context,
+           const TRequest& request)
     {
         _responseReader = std::unique_ptr<grpc::ClientAsyncResponseReader<TResponse>>(new ::grpc::ClientAsyncResponseReader<
             ::bond::comm::message< ::helloworld::HelloReply>>(channel, ioManager->cq(), method, context, request));

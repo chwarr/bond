@@ -15,6 +15,7 @@
 #endif
 
 #include <bond/ext/grpc/io_manager.h>
+#include <memory>
 
 namespace bond { namespace ext { namespace gRPC {
 
@@ -28,37 +29,11 @@ namespace bond { namespace ext { namespace gRPC {
             _ioManager = ioManager;
         }
 
-        ~proxy()
-        {
-            Shutdown();
-            Wait();
-        }
-
         proxy(const proxy&) = delete;
         proxy& operator=(const proxy&) = delete;
 
         proxy(proxy&&) = default;
         proxy& operator=(proxy&&) = default;
-
-        /// Shutdown the proxy, waiting for all rpc processing to finish.
-        void Shutdown()
-        {
-            _ioManager->shutdown();
-        }
-
-        /// @brief Block waiting for all work to complete.
-        ///
-        /// @warning The proxy must be either shutting down or some other
-        /// thread must call \p Shutdown for this function to ever return.
-        void Wait()
-        {
-            _ioManager->wait();
-        }
-
-        void start()
-        {
-            _ioManager->start();
-        }
 
     protected:
         std::shared_ptr<io_manager> _ioManager;

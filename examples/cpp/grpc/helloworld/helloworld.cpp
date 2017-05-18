@@ -49,12 +49,18 @@ class GreeterServiceImpl final : public Greeter::Service {
     }
 };
 
-void printAndSet(event* print_event, bool* isCorrectResponse, const bond::comm::message< HelloReply>& response, const Status& status) {
+void printAndSet(event* print_event,
+        bool* isCorrectResponse,
+        const bond::comm::message< HelloReply>& response,
+        const Status& status) {
+
+    *isCorrectResponse = false;
+
     if(status.ok())
     {
         std::string message = response.value().Deserialize().message;
 
-        if (message.compare(std::string("hello world")) == 0)
+        if (message.compare("hello world") == 0)
         {
             std::cout << "Correct response: " << message;
             *isCorrectResponse = true;
@@ -80,10 +86,10 @@ int main()
     std::unique_ptr<bond::ext::gRPC::server> server(builder.BuildAndStart());
 
     std::unique_ptr<grpc::CompletionQueue> cq_(new grpc::CompletionQueue());
-    std::shared_ptr<io_manager> ioManager(new io_manager(std::move(cq_)));
+    auto ioManager = std::make_shared<io_manager>(std::move(cq_));
+    ioManager->start();
 
     Greeter2::GreeterClient greeter(grpc::CreateChannel(server_address, grpc::InsecureChannelCredentials()), ioManager);
-    greeter.start();
 
     ClientContext context;
 
@@ -105,10 +111,16 @@ int main()
     bool waitResult = print_event.wait(std::chrono::seconds(10));
 
     if (!waitResult)
+    {
         std::cout << "time out ocurred";
+    }
 
     if (waitResult && isCorrectResponse)
+    {
         return 0;
+    }
     else
+    {
         return 1;
+    }
 }
