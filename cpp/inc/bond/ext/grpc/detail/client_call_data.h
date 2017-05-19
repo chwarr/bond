@@ -17,7 +17,7 @@
     #pragma warning (pop)
 #endif
 
-#include <bond/ext/grpc/detail/io_manager_tag.h>
+#include <bond/ext/grpc/io_manager.h>
 #include <bond/ext/grpc/detail/service.h>
 #include <bond/ext/grpc/unary_call.h>
 
