@@ -53,10 +53,10 @@ static const char* Greeter_method_names[] = {
 };
 
 Greeter2::GreeterClient::GreeterClient(const std::shared_ptr< ::grpc::ChannelInterface>& channel, std::shared_ptr< ::bond::ext::gRPC::io_manager> ioManager)
-    : channel_(channel)
-    , rpcmethod_SayHello_(Greeter_method_names[0], ::grpc::RpcMethod::NORMAL_RPC, channel)
+    : channel_(channel),
+    ioManager_(ioManager),
+    rpcmethod_SayHello_(Greeter_method_names[0], ::grpc::RpcMethod::NORMAL_RPC, channel)
   {
-      ioManager_ = ioManager;
   }
 
 
