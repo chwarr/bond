@@ -38,22 +38,24 @@ namespace tests
 class Foo final
 {
 public:
-    class FooClient
+    template <typename TThreadPool>
+    class Client
     {
     public:
-        FooClient(const std::shared_ptr< ::grpc::ChannelInterface>& channel, std::shared_ptr< ::bond::ext::gRPC::io_manager> ioManager);
+        Client(const std::shared_ptr< ::grpc::ChannelInterface>& channel, std::shared_ptr< ::bond::ext::gRPC::io_manager> ioManager, TThreadPool* threadPool);
 
         void Asyncfoo(::grpc::ClientContext* context, const ::bond::comm::message< ::tests::Param>& request, std::function<void(const ::bond::comm::message< ::tests::Result>&, const ::grpc::Status&)> cb);
 
-        FooClient(const FooClient&) = delete;
-        FooClient& operator=(const FooClient&) = delete;
+        Client(const Client&) = delete;
+        Client& operator=(const Client&) = delete;
 
-        FooClient(FooClient&&) = default;
-        FooClient& operator=(FooClient&&) = default;
+        Client(Client&&) = default;
+        Client& operator=(Client&&) = default;
 
     private:
         std::shared_ptr< ::grpc::ChannelInterface> channel_;
         std::shared_ptr< ::bond::ext::gRPC::io_manager> ioManager_;
+        TThreadPool* threadPool_;
 
         const ::grpc::RpcMethod rpcmethod_foo_;
     };
@@ -81,7 +83,26 @@ public:
     private:
         boost::optional<::bond::ext::gRPC::detail::service_unary_call_data<::bond::comm::message< ::tests::Param>, ::bond::comm::message< ::tests::Result>>> _rd_foo;
     };
+
+private:
+    static const char* method_names[];
 };
+
+template <typename TThreadPool>
+Foo::Client<TThreadPool>::Client(const std::shared_ptr< ::grpc::ChannelInterface>& channel, std::shared_ptr< ::bond::ext::gRPC::io_manager> ioManager, TThreadPool* threadPool)
+    : channel_(channel)
+    , ioManager_(ioManager)
+    , threadPool_(threadPool)
+    , rpcmethod_foo_(method_names[0], ::grpc::RpcMethod::NORMAL_RPC, channel)
+    { }
+
+template <typename TThreadPool>
+void Foo::Client<TThreadPool>::Asyncfoo(::grpc::ClientContext* context, const ::bond::comm::message< ::tests::Param>& request, std::function<void(const ::bond::comm::message< ::tests::Result>&, const ::grpc::Status&)> cb)
+{
+    ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message< ::tests::Param>, ::bond::comm::message< ::tests::Result>, TThreadPool >* calldata = new ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message< ::tests::Param>, ::bond::comm::message< ::tests::Result>, TThreadPool >(cb, threadPool_);
+    calldata->dispatch(channel_.get(), ioManager_.get(), rpcmethod_foo_, context, request);
+}
+
 
 } // namespace tests
 

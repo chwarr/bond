@@ -21,6 +21,7 @@
 #include <bond/ext/grpc/server.h>
 #include <bond/ext/grpc/server_builder.h>
 #include <bond/ext/grpc/unary_call.h>
+#include <bond/ext/grpc/thread_pool.h>
 
 #include <chrono>
 #include <functional>
@@ -93,7 +94,9 @@ int main()
     std::unique_ptr<grpc::CompletionQueue> cq_(new grpc::CompletionQueue());
     auto ioManager = std::make_shared<io_manager>(std::move(cq_));
 
-    Greeter::GreeterClient greeter(grpc::CreateChannel(server_address, grpc::InsecureChannelCredentials()), ioManager);
+    std::unique_ptr<bond::ext::thread_pool> threadPool(new bond::ext::thread_pool());
+
+    Greeter::Client<bond::ext::thread_pool> greeter(grpc::CreateChannel(server_address, grpc::InsecureChannelCredentials()), ioManager, threadPool.get());
 
     ClientContext context;
 
