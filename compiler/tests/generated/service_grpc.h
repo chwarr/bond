@@ -255,9 +255,6 @@ public:
         boost::optional<::bond::ext::gRPC::detail::service_unary_call_data<::bond::comm::message< ::tests::dummy>, ::bond::comm::message< ::tests::dummy>>> _rd_foo44;
         boost::optional<::bond::ext::gRPC::detail::service_unary_call_data<::bond::comm::message<void>, ::bond::comm::message< ::tests::BasicTypes>>> _rd_cq;
     };
-
-private:
-    static const char* method_names[];
 };
 
 template <typename TThreadPool>
@@ -271,20 +268,20 @@ Foo::Client<TThreadPool>::Client(const std::shared_ptr< ::grpc::ChannelInterface
     /* TODO stub ctor initialization for event foo13 */
     /* TODO stub ctor initialization for event foo14 */
     /* TODO stub ctor initialization for event foo15 */
-    , rpcmethod_foo21_(method_names[6], ::grpc::RpcMethod::NORMAL_RPC, channel)
-    , rpcmethod_foo22_(method_names[7], ::grpc::RpcMethod::NORMAL_RPC, channel)
-    , rpcmethod_foo23_(method_names[8], ::grpc::RpcMethod::NORMAL_RPC, channel)
-    , rpcmethod_foo24_(method_names[9], ::grpc::RpcMethod::NORMAL_RPC, channel)
-    , rpcmethod_foo31_(method_names[10], ::grpc::RpcMethod::NORMAL_RPC, channel)
-    , rpcmethod_foo32_(method_names[11], ::grpc::RpcMethod::NORMAL_RPC, channel)
-    , rpcmethod_foo33_(method_names[12], ::grpc::RpcMethod::NORMAL_RPC, channel)
-    , rpcmethod__rd_foo33_(method_names[13], ::grpc::RpcMethod::NORMAL_RPC, channel)
-    , rpcmethod_foo34_(method_names[14], ::grpc::RpcMethod::NORMAL_RPC, channel)
-    , rpcmethod_foo41_(method_names[15], ::grpc::RpcMethod::NORMAL_RPC, channel)
-    , rpcmethod_foo42_(method_names[16], ::grpc::RpcMethod::NORMAL_RPC, channel)
-    , rpcmethod_foo43_(method_names[17], ::grpc::RpcMethod::NORMAL_RPC, channel)
-    , rpcmethod_foo44_(method_names[18], ::grpc::RpcMethod::NORMAL_RPC, channel)
-    , rpcmethod_cq_(method_names[19], ::grpc::RpcMethod::NORMAL_RPC, channel)
+    , rpcmethod_foo21_("/tests.Foo/foo21", ::grpc::RpcMethod::NORMAL_RPC, channel)
+    , rpcmethod_foo22_("/tests.Foo/foo22", ::grpc::RpcMethod::NORMAL_RPC, channel)
+    , rpcmethod_foo23_("/tests.Foo/foo23", ::grpc::RpcMethod::NORMAL_RPC, channel)
+    , rpcmethod_foo24_("/tests.Foo/foo24", ::grpc::RpcMethod::NORMAL_RPC, channel)
+    , rpcmethod_foo31_("/tests.Foo/foo31", ::grpc::RpcMethod::NORMAL_RPC, channel)
+    , rpcmethod_foo32_("/tests.Foo/foo32", ::grpc::RpcMethod::NORMAL_RPC, channel)
+    , rpcmethod_foo33_("/tests.Foo/foo33", ::grpc::RpcMethod::NORMAL_RPC, channel)
+    , rpcmethod__rd_foo33_("/tests.Foo/_rd_foo33", ::grpc::RpcMethod::NORMAL_RPC, channel)
+    , rpcmethod_foo34_("/tests.Foo/foo34", ::grpc::RpcMethod::NORMAL_RPC, channel)
+    , rpcmethod_foo41_("/tests.Foo/foo41", ::grpc::RpcMethod::NORMAL_RPC, channel)
+    , rpcmethod_foo42_("/tests.Foo/foo42", ::grpc::RpcMethod::NORMAL_RPC, channel)
+    , rpcmethod_foo43_("/tests.Foo/foo43", ::grpc::RpcMethod::NORMAL_RPC, channel)
+    , rpcmethod_foo44_("/tests.Foo/foo44", ::grpc::RpcMethod::NORMAL_RPC, channel)
+    , rpcmethod_cq_("/tests.Foo/cq", ::grpc::RpcMethod::NORMAL_RPC, channel)
     { }
 
 /* TODO: stub implementation for event foo11 */

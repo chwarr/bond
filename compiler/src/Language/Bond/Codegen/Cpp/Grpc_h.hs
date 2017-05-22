@@ -127,9 +127,6 @@ public:
     private:
         #{newlineSep 2 serviceMethodReceiveData serviceMethods}
     };
-
-private:
-    static const char* method_names[];
 };
 
 template <typename TThreadPool>
@@ -137,7 +134,7 @@ template <typename TThreadPool>
     : channel_(channel)
     , ioManager_(ioManager)
     , threadPool_(threadPool)
-    #{newlineSep 1 proxyMethodMemberInit serviceMethodsWithIndex}
+    #{newlineSep 1 proxyMethodMemberInit serviceMethods}
     { }
 
 #{doubleLineSep 0 methodDecl serviceMethods}
@@ -158,8 +155,8 @@ template <typename TThreadPool>
         privateProxyMethodDecl Function{..} = [lt|const ::grpc::RpcMethod rpcmethod_#{methodName}_;|]
         privateProxyMethodDecl Event{..} = [lt|/* TODO stub implementation (private) for event #{methodName} */|]
 
-        proxyMethodMemberInit (index,Function{..}) = [lt|, rpcmethod_#{methodName}_(method_names[#{index}], ::grpc::RpcMethod::NORMAL_RPC, channel)|]
-        proxyMethodMemberInit (_,Event{..}) = [lt|/* TODO stub ctor initialization for event #{methodName} */|]
+        proxyMethodMemberInit Function{..} = [lt|, rpcmethod_#{methodName}_("/#{getDeclTypeName idl s}/#{methodName}", ::grpc::RpcMethod::NORMAL_RPC, channel)|]
+        proxyMethodMemberInit Event{..} = [lt|/* TODO stub ctor initialization for event #{methodName} */|]
 
         methodDecl Function{..} = [lt|template <typename TThreadPool>
 void #{declName}::#{proxyName}<TThreadPool>::Async#{methodName}(::grpc::ClientContext* context, const #{request methodInput}& request, std::function<void(const #{response methodResult}&, const ::grpc::Status&)> cb)

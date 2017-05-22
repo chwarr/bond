@@ -83,9 +83,6 @@ public:
     private:
         boost::optional<::bond::ext::gRPC::detail::service_unary_call_data<::bond::comm::message< ::tests::Param>, ::bond::comm::message< ::tests::Result>>> _rd_foo;
     };
-
-private:
-    static const char* method_names[];
 };
 
 template <typename TThreadPool>
@@ -93,7 +90,7 @@ Foo::Client<TThreadPool>::Client(const std::shared_ptr< ::grpc::ChannelInterface
     : channel_(channel)
     , ioManager_(ioManager)
     , threadPool_(threadPool)
-    , rpcmethod_foo_(method_names[0], ::grpc::RpcMethod::NORMAL_RPC, channel)
+    , rpcmethod_foo_("/tests.Foo/foo", ::grpc::RpcMethod::NORMAL_RPC, channel)
     { }
 
 template <typename TThreadPool>

@@ -101,9 +101,6 @@ public:
         boost::optional<::bond::ext::gRPC::detail::service_unary_call_data<::bond::comm::message<void>, ::bond::comm::message<Payload>>> _rd_foo32;
         boost::optional<::bond::ext::gRPC::detail::service_unary_call_data<::bond::comm::message<Payload>, ::bond::comm::message<Payload>>> _rd_foo33;
     };
-
-private:
-    static const char* method_names[];
 };
 
 template <typename TThreadPool>
@@ -111,9 +108,9 @@ Foo::Client<TThreadPool>::Client(const std::shared_ptr< ::grpc::ChannelInterface
     : channel_(channel)
     , ioManager_(ioManager)
     , threadPool_(threadPool)
-    , rpcmethod_foo31_(method_names[0], ::grpc::RpcMethod::NORMAL_RPC, channel)
-    , rpcmethod_foo32_(method_names[1], ::grpc::RpcMethod::NORMAL_RPC, channel)
-    , rpcmethod_foo33_(method_names[2], ::grpc::RpcMethod::NORMAL_RPC, channel)
+    , rpcmethod_foo31_("/tests.Foo/foo31", ::grpc::RpcMethod::NORMAL_RPC, channel)
+    , rpcmethod_foo32_("/tests.Foo/foo32", ::grpc::RpcMethod::NORMAL_RPC, channel)
+    , rpcmethod_foo33_("/tests.Foo/foo33", ::grpc::RpcMethod::NORMAL_RPC, channel)
     { }
 
 template <typename TThreadPool>
