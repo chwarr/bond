@@ -14,6 +14,8 @@
 #include <atomic>
 #include <chrono>
 #include <functional>
+#include <memory>
+#include <thread>
 
 using namespace bond::ext::detail;
 

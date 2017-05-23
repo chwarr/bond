@@ -32,9 +32,9 @@ class thread_pool_concept
 {
     /// @brief Schedules a callback for execution.
     ///
-    /// @warning The scheduled callback must be exectured at some point in the
-    /// future. Some components use the thread_pool_concept to schedule the
-    /// freeing of resources. If a scheduled callback is dropped, these
+    /// @warning The scheduled callback must be executed at some point in
+    /// the future. Some components use the thread_pool_concept to schedule
+    /// the freeing of resources. If a scheduled callback is dropped, these
     /// resources may not be freed.
     ///
     /// @param callback functor object to be scheduled. Must accept any
@@ -61,9 +61,6 @@ public:
     thread_pool(size_t numThreads = USE_HARDWARE_CONC)
         : _work(*this)
     {
-        //
-        // If preferred # of threads is 0, use # of cpu cores.
-        //
         if (USE_HARDWARE_CONC == numThreads)
         {
             numThreads = static_cast<size_t>(std::thread::hardware_concurrency());
@@ -76,9 +73,7 @@ public:
             }
         }
 
-        //
         // Spin working threads.
-        //
         for (size_t i = 0; i < numThreads; ++i)
         {
             _threads.emplace_back(
