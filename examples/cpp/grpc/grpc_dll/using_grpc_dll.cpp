@@ -134,7 +134,7 @@ int main()
 
     std::cout << schema.GetSchema().structs[schema.GetSchema().root.struct_def].fields[0].metadata.name << std::endl;
 
-    // Exercize gRPC facilities
+    // Exercise gRPC facilities
 
     const std::string server_address("127.0.0.1:50051");
 
