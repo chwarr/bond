@@ -12,7 +12,7 @@ import Prelude
 import qualified Data.Text.Lazy as L
 import Data.Text.Lazy.Builder
 import Text.Shakespeare.Text
--- import Language.Bond.Util
+import Language.Bond.Util
 import Language.Bond.Syntax.Types
 -- import Language.Bond.Syntax.Util
 import Language.Bond.Codegen.Util
@@ -23,7 +23,7 @@ import qualified Language.Bond.Codegen.Cpp.Util as CPP
 -- | Codegen template for generating /base_name/_grpc.h containing declarations of
 -- of service interface and proxy.
 grpc_h :: Maybe String -> MappingContext -> String -> [Import] -> [Declaration] -> (String, L.Text)
-grpc_h _ cpp file imports declarations = ("_grpc.h", [lt|
+grpc_h export_attribute cpp file imports declarations = ("_grpc.h", [lt|
 #pragma once
 
 #include "#{file}_reflection.h"
@@ -111,7 +111,7 @@ public:
         #{doubleLineSep 2 privateStubMethodDecl serviceMethods}
     };
 
-    static std::unique_ptr<Stub> NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options = ::grpc::StubOptions());
+    #{export_attr}static std::unique_ptr<Stub> NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options = ::grpc::StubOptions());
 
     class Service : public ::bond::ext::gRPC::detail::service
     {
@@ -131,6 +131,9 @@ public:
     };
 };|]
       where
+        export_attr = optional (\a -> [lt|#{a}
+        |]) export_attribute
+
         methodNames :: [String]
         methodNames = map methodName serviceMethods
 
