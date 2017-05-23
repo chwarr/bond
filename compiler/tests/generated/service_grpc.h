@@ -9,6 +9,7 @@
 #include <bond/comm/message.h>
 #include <bond/ext/grpc/bond_utils.h>
 #include <bond/ext/grpc/io_manager.h>
+#include <bond/ext/grpc/thread_pool.h>
 #include <bond/ext/grpc/unary_call.h>
 #include <bond/ext/grpc/detail/client_call_data.h>
 #include <bond/ext/grpc/detail/service.h>
@@ -40,10 +41,10 @@ class Foo final
 {
 public:
     template <typename TThreadPool>
-    class Client
+    class ClientCore
     {
     public:
-        Client(const std::shared_ptr< ::grpc::ChannelInterface>& channel, std::shared_ptr< ::bond::ext::gRPC::io_manager> ioManager, TThreadPool* threadPool);
+        ClientCore(const std::shared_ptr< ::grpc::ChannelInterface>& channel, std::shared_ptr< ::bond::ext::gRPC::io_manager> ioManager, TThreadPool* threadPool);
 
         /* TODO stub implementation (public) for event foo11 */
 
@@ -85,11 +86,11 @@ public:
 
         void Asynccq(::grpc::ClientContext* context, const ::bond::comm::message<void>& request, std::function<void(const ::bond::comm::message< ::tests::BasicTypes>&, const ::grpc::Status&)> cb);
 
-        Client(const Client&) = delete;
-        Client& operator=(const Client&) = delete;
+        ClientCore(const ClientCore&) = delete;
+        ClientCore& operator=(const ClientCore&) = delete;
 
-        Client(Client&&) = default;
-        Client& operator=(Client&&) = default;
+        ClientCore(ClientCore&&) = default;
+        ClientCore& operator=(ClientCore&&) = default;
 
     private:
         std::shared_ptr< ::grpc::ChannelInterface> channel_;
@@ -136,6 +137,8 @@ public:
 
         const ::grpc::RpcMethod rpcmethod_cq_;
     };
+
+    using Client = ClientCore< ::bond::ext::thread_pool>;
 
     class Service : public ::bond::ext::gRPC::detail::service
     {
@@ -257,8 +260,9 @@ public:
     };
 };
 
+
 template <typename TThreadPool>
-Foo::Client<TThreadPool>::Client(const std::shared_ptr< ::grpc::ChannelInterface>& channel, std::shared_ptr< ::bond::ext::gRPC::io_manager> ioManager, TThreadPool* threadPool)
+Foo::ClientCore<TThreadPool>::ClientCore(const std::shared_ptr< ::grpc::ChannelInterface>& channel, std::shared_ptr< ::bond::ext::gRPC::io_manager> ioManager, TThreadPool* threadPool)
     : channel_(channel)
     , ioManager_(ioManager)
     , threadPool_(threadPool)
@@ -297,100 +301,100 @@ Foo::Client<TThreadPool>::Client(const std::shared_ptr< ::grpc::ChannelInterface
 /* TODO: stub implementation for event foo15 */
 
 template <typename TThreadPool>
-void Foo::Client<TThreadPool>::Asyncfoo21(::grpc::ClientContext* context, const ::bond::comm::message<void>& request, std::function<void(const ::bond::comm::message<void>&, const ::grpc::Status&)> cb)
+void Foo::ClientCore<TThreadPool>::Asyncfoo21(::grpc::ClientContext* context, const ::bond::comm::message<void>& request, std::function<void(const ::bond::comm::message<void>&, const ::grpc::Status&)> cb)
 {
-    ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message<void>, ::bond::comm::message<void>, TThreadPool >* calldata = new ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message<void>, ::bond::comm::message<void>, TThreadPool >(cb, threadPool_);
+    auto calldata = new ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message<void>, ::bond::comm::message<void>, TThreadPool >(cb, threadPool_);
     calldata->dispatch(channel_.get(), ioManager_.get(), rpcmethod_foo21_, context, request);
 }
 
 template <typename TThreadPool>
-void Foo::Client<TThreadPool>::Asyncfoo22(::grpc::ClientContext* context, const ::bond::comm::message<void>& request, std::function<void(const ::bond::comm::message<void>&, const ::grpc::Status&)> cb)
+void Foo::ClientCore<TThreadPool>::Asyncfoo22(::grpc::ClientContext* context, const ::bond::comm::message<void>& request, std::function<void(const ::bond::comm::message<void>&, const ::grpc::Status&)> cb)
 {
-    ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message<void>, ::bond::comm::message<void>, TThreadPool >* calldata = new ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message<void>, ::bond::comm::message<void>, TThreadPool >(cb, threadPool_);
+    auto calldata = new ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message<void>, ::bond::comm::message<void>, TThreadPool >(cb, threadPool_);
     calldata->dispatch(channel_.get(), ioManager_.get(), rpcmethod_foo22_, context, request);
 }
 
 template <typename TThreadPool>
-void Foo::Client<TThreadPool>::Asyncfoo23(::grpc::ClientContext* context, const ::bond::comm::message< ::tests::BasicTypes>& request, std::function<void(const ::bond::comm::message<void>&, const ::grpc::Status&)> cb)
+void Foo::ClientCore<TThreadPool>::Asyncfoo23(::grpc::ClientContext* context, const ::bond::comm::message< ::tests::BasicTypes>& request, std::function<void(const ::bond::comm::message<void>&, const ::grpc::Status&)> cb)
 {
-    ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message< ::tests::BasicTypes>, ::bond::comm::message<void>, TThreadPool >* calldata = new ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message< ::tests::BasicTypes>, ::bond::comm::message<void>, TThreadPool >(cb, threadPool_);
+    auto calldata = new ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message< ::tests::BasicTypes>, ::bond::comm::message<void>, TThreadPool >(cb, threadPool_);
     calldata->dispatch(channel_.get(), ioManager_.get(), rpcmethod_foo23_, context, request);
 }
 
 template <typename TThreadPool>
-void Foo::Client<TThreadPool>::Asyncfoo24(::grpc::ClientContext* context, const ::bond::comm::message< ::tests::dummy>& request, std::function<void(const ::bond::comm::message<void>&, const ::grpc::Status&)> cb)
+void Foo::ClientCore<TThreadPool>::Asyncfoo24(::grpc::ClientContext* context, const ::bond::comm::message< ::tests::dummy>& request, std::function<void(const ::bond::comm::message<void>&, const ::grpc::Status&)> cb)
 {
-    ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message< ::tests::dummy>, ::bond::comm::message<void>, TThreadPool >* calldata = new ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message< ::tests::dummy>, ::bond::comm::message<void>, TThreadPool >(cb, threadPool_);
+    auto calldata = new ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message< ::tests::dummy>, ::bond::comm::message<void>, TThreadPool >(cb, threadPool_);
     calldata->dispatch(channel_.get(), ioManager_.get(), rpcmethod_foo24_, context, request);
 }
 
 template <typename TThreadPool>
-void Foo::Client<TThreadPool>::Asyncfoo31(::grpc::ClientContext* context, const ::bond::comm::message<void>& request, std::function<void(const ::bond::comm::message< ::tests::BasicTypes>&, const ::grpc::Status&)> cb)
+void Foo::ClientCore<TThreadPool>::Asyncfoo31(::grpc::ClientContext* context, const ::bond::comm::message<void>& request, std::function<void(const ::bond::comm::message< ::tests::BasicTypes>&, const ::grpc::Status&)> cb)
 {
-    ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message<void>, ::bond::comm::message< ::tests::BasicTypes>, TThreadPool >* calldata = new ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message<void>, ::bond::comm::message< ::tests::BasicTypes>, TThreadPool >(cb, threadPool_);
+    auto calldata = new ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message<void>, ::bond::comm::message< ::tests::BasicTypes>, TThreadPool >(cb, threadPool_);
     calldata->dispatch(channel_.get(), ioManager_.get(), rpcmethod_foo31_, context, request);
 }
 
 template <typename TThreadPool>
-void Foo::Client<TThreadPool>::Asyncfoo32(::grpc::ClientContext* context, const ::bond::comm::message<void>& request, std::function<void(const ::bond::comm::message< ::tests::BasicTypes>&, const ::grpc::Status&)> cb)
+void Foo::ClientCore<TThreadPool>::Asyncfoo32(::grpc::ClientContext* context, const ::bond::comm::message<void>& request, std::function<void(const ::bond::comm::message< ::tests::BasicTypes>&, const ::grpc::Status&)> cb)
 {
-    ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message<void>, ::bond::comm::message< ::tests::BasicTypes>, TThreadPool >* calldata = new ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message<void>, ::bond::comm::message< ::tests::BasicTypes>, TThreadPool >(cb, threadPool_);
+    auto calldata = new ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message<void>, ::bond::comm::message< ::tests::BasicTypes>, TThreadPool >(cb, threadPool_);
     calldata->dispatch(channel_.get(), ioManager_.get(), rpcmethod_foo32_, context, request);
 }
 
 template <typename TThreadPool>
-void Foo::Client<TThreadPool>::Asyncfoo33(::grpc::ClientContext* context, const ::bond::comm::message< ::tests::BasicTypes>& request, std::function<void(const ::bond::comm::message< ::tests::BasicTypes>&, const ::grpc::Status&)> cb)
+void Foo::ClientCore<TThreadPool>::Asyncfoo33(::grpc::ClientContext* context, const ::bond::comm::message< ::tests::BasicTypes>& request, std::function<void(const ::bond::comm::message< ::tests::BasicTypes>&, const ::grpc::Status&)> cb)
 {
-    ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message< ::tests::BasicTypes>, ::bond::comm::message< ::tests::BasicTypes>, TThreadPool >* calldata = new ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message< ::tests::BasicTypes>, ::bond::comm::message< ::tests::BasicTypes>, TThreadPool >(cb, threadPool_);
+    auto calldata = new ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message< ::tests::BasicTypes>, ::bond::comm::message< ::tests::BasicTypes>, TThreadPool >(cb, threadPool_);
     calldata->dispatch(channel_.get(), ioManager_.get(), rpcmethod_foo33_, context, request);
 }
 
 template <typename TThreadPool>
-void Foo::Client<TThreadPool>::Async_rd_foo33(::grpc::ClientContext* context, const ::bond::comm::message< ::tests::BasicTypes>& request, std::function<void(const ::bond::comm::message< ::tests::BasicTypes>&, const ::grpc::Status&)> cb)
+void Foo::ClientCore<TThreadPool>::Async_rd_foo33(::grpc::ClientContext* context, const ::bond::comm::message< ::tests::BasicTypes>& request, std::function<void(const ::bond::comm::message< ::tests::BasicTypes>&, const ::grpc::Status&)> cb)
 {
-    ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message< ::tests::BasicTypes>, ::bond::comm::message< ::tests::BasicTypes>, TThreadPool >* calldata = new ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message< ::tests::BasicTypes>, ::bond::comm::message< ::tests::BasicTypes>, TThreadPool >(cb, threadPool_);
+    auto calldata = new ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message< ::tests::BasicTypes>, ::bond::comm::message< ::tests::BasicTypes>, TThreadPool >(cb, threadPool_);
     calldata->dispatch(channel_.get(), ioManager_.get(), rpcmethod__rd_foo33_, context, request);
 }
 
 template <typename TThreadPool>
-void Foo::Client<TThreadPool>::Asyncfoo34(::grpc::ClientContext* context, const ::bond::comm::message< ::tests::dummy>& request, std::function<void(const ::bond::comm::message< ::tests::BasicTypes>&, const ::grpc::Status&)> cb)
+void Foo::ClientCore<TThreadPool>::Asyncfoo34(::grpc::ClientContext* context, const ::bond::comm::message< ::tests::dummy>& request, std::function<void(const ::bond::comm::message< ::tests::BasicTypes>&, const ::grpc::Status&)> cb)
 {
-    ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message< ::tests::dummy>, ::bond::comm::message< ::tests::BasicTypes>, TThreadPool >* calldata = new ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message< ::tests::dummy>, ::bond::comm::message< ::tests::BasicTypes>, TThreadPool >(cb, threadPool_);
+    auto calldata = new ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message< ::tests::dummy>, ::bond::comm::message< ::tests::BasicTypes>, TThreadPool >(cb, threadPool_);
     calldata->dispatch(channel_.get(), ioManager_.get(), rpcmethod_foo34_, context, request);
 }
 
 template <typename TThreadPool>
-void Foo::Client<TThreadPool>::Asyncfoo41(::grpc::ClientContext* context, const ::bond::comm::message<void>& request, std::function<void(const ::bond::comm::message< ::tests::dummy>&, const ::grpc::Status&)> cb)
+void Foo::ClientCore<TThreadPool>::Asyncfoo41(::grpc::ClientContext* context, const ::bond::comm::message<void>& request, std::function<void(const ::bond::comm::message< ::tests::dummy>&, const ::grpc::Status&)> cb)
 {
-    ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message<void>, ::bond::comm::message< ::tests::dummy>, TThreadPool >* calldata = new ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message<void>, ::bond::comm::message< ::tests::dummy>, TThreadPool >(cb, threadPool_);
+    auto calldata = new ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message<void>, ::bond::comm::message< ::tests::dummy>, TThreadPool >(cb, threadPool_);
     calldata->dispatch(channel_.get(), ioManager_.get(), rpcmethod_foo41_, context, request);
 }
 
 template <typename TThreadPool>
-void Foo::Client<TThreadPool>::Asyncfoo42(::grpc::ClientContext* context, const ::bond::comm::message<void>& request, std::function<void(const ::bond::comm::message< ::tests::dummy>&, const ::grpc::Status&)> cb)
+void Foo::ClientCore<TThreadPool>::Asyncfoo42(::grpc::ClientContext* context, const ::bond::comm::message<void>& request, std::function<void(const ::bond::comm::message< ::tests::dummy>&, const ::grpc::Status&)> cb)
 {
-    ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message<void>, ::bond::comm::message< ::tests::dummy>, TThreadPool >* calldata = new ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message<void>, ::bond::comm::message< ::tests::dummy>, TThreadPool >(cb, threadPool_);
+    auto calldata = new ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message<void>, ::bond::comm::message< ::tests::dummy>, TThreadPool >(cb, threadPool_);
     calldata->dispatch(channel_.get(), ioManager_.get(), rpcmethod_foo42_, context, request);
 }
 
 template <typename TThreadPool>
-void Foo::Client<TThreadPool>::Asyncfoo43(::grpc::ClientContext* context, const ::bond::comm::message< ::tests::BasicTypes>& request, std::function<void(const ::bond::comm::message< ::tests::dummy>&, const ::grpc::Status&)> cb)
+void Foo::ClientCore<TThreadPool>::Asyncfoo43(::grpc::ClientContext* context, const ::bond::comm::message< ::tests::BasicTypes>& request, std::function<void(const ::bond::comm::message< ::tests::dummy>&, const ::grpc::Status&)> cb)
 {
-    ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message< ::tests::BasicTypes>, ::bond::comm::message< ::tests::dummy>, TThreadPool >* calldata = new ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message< ::tests::BasicTypes>, ::bond::comm::message< ::tests::dummy>, TThreadPool >(cb, threadPool_);
+    auto calldata = new ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message< ::tests::BasicTypes>, ::bond::comm::message< ::tests::dummy>, TThreadPool >(cb, threadPool_);
     calldata->dispatch(channel_.get(), ioManager_.get(), rpcmethod_foo43_, context, request);
 }
 
 template <typename TThreadPool>
-void Foo::Client<TThreadPool>::Asyncfoo44(::grpc::ClientContext* context, const ::bond::comm::message< ::tests::dummy>& request, std::function<void(const ::bond::comm::message< ::tests::dummy>&, const ::grpc::Status&)> cb)
+void Foo::ClientCore<TThreadPool>::Asyncfoo44(::grpc::ClientContext* context, const ::bond::comm::message< ::tests::dummy>& request, std::function<void(const ::bond::comm::message< ::tests::dummy>&, const ::grpc::Status&)> cb)
 {
-    ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message< ::tests::dummy>, ::bond::comm::message< ::tests::dummy>, TThreadPool >* calldata = new ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message< ::tests::dummy>, ::bond::comm::message< ::tests::dummy>, TThreadPool >(cb, threadPool_);
+    auto calldata = new ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message< ::tests::dummy>, ::bond::comm::message< ::tests::dummy>, TThreadPool >(cb, threadPool_);
     calldata->dispatch(channel_.get(), ioManager_.get(), rpcmethod_foo44_, context, request);
 }
 
 template <typename TThreadPool>
-void Foo::Client<TThreadPool>::Asynccq(::grpc::ClientContext* context, const ::bond::comm::message<void>& request, std::function<void(const ::bond::comm::message< ::tests::BasicTypes>&, const ::grpc::Status&)> cb)
+void Foo::ClientCore<TThreadPool>::Asynccq(::grpc::ClientContext* context, const ::bond::comm::message<void>& request, std::function<void(const ::bond::comm::message< ::tests::BasicTypes>&, const ::grpc::Status&)> cb)
 {
-    ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message<void>, ::bond::comm::message< ::tests::BasicTypes>, TThreadPool >* calldata = new ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message<void>, ::bond::comm::message< ::tests::BasicTypes>, TThreadPool >(cb, threadPool_);
+    auto calldata = new ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message<void>, ::bond::comm::message< ::tests::BasicTypes>, TThreadPool >(cb, threadPool_);
     calldata->dispatch(channel_.get(), ioManager_.get(), rpcmethod_cq_, context, request);
 }
 

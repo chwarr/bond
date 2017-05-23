@@ -94,9 +94,9 @@ int main()
     std::unique_ptr<grpc::CompletionQueue> cq_(new grpc::CompletionQueue());
     auto ioManager = std::make_shared<io_manager>(std::move(cq_));
 
-    std::unique_ptr<bond::ext::thread_pool> threadPool(new bond::ext::thread_pool());
+    bond::ext::thread_pool threadPool;
 
-    Greeter::Client<bond::ext::thread_pool> greeter(grpc::CreateChannel(server_address, grpc::InsecureChannelCredentials()), ioManager, threadPool.get());
+    Greeter::Client greeter(grpc::CreateChannel(server_address, grpc::InsecureChannelCredentials()), ioManager, &threadPool);
 
     ClientContext context;
 

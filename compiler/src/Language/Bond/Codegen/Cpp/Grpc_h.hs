@@ -32,6 +32,7 @@ grpc_h _ cpp file imports declarations = ("_grpc.h", [lt|
 #include <bond/comm/message.h>
 #include <bond/ext/grpc/bond_utils.h>
 #include <bond/ext/grpc/io_manager.h>
+#include <bond/ext/grpc/thread_pool.h>
 #include <bond/ext/grpc/unary_call.h>
 #include <bond/ext/grpc/detail/client_call_data.h>
 #include <bond/ext/grpc/detail/service.h>
@@ -111,6 +112,8 @@ public:
         #{doubleLineSep 2 privateProxyMethodDecl serviceMethods}
     };
 
+    using Client = #{proxyName}< ::bond::ext::thread_pool>;
+
     class Service : public ::bond::ext::gRPC::detail::service
     {
     public:
@@ -129,6 +132,7 @@ public:
     };
 };
 
+
 template <typename TThreadPool>
 #{declName}::#{proxyName}<TThreadPool>::#{proxyName}(const std::shared_ptr< ::grpc::ChannelInterface>& channel, std::shared_ptr< ::bond::ext::gRPC::io_manager> ioManager, TThreadPool* threadPool)
     : channel_(channel)
@@ -144,7 +148,7 @@ template <typename TThreadPool>
         methodNames = map methodName serviceMethods
 
         proxyName :: String
-        proxyName = "Client"
+        proxyName = "ClientCore"
 
         serviceMethodsWithIndex :: [(Integer,Method)]
         serviceMethodsWithIndex = zip [0..] serviceMethods
@@ -161,7 +165,7 @@ template <typename TThreadPool>
         methodDecl Function{..} = [lt|template <typename TThreadPool>
 void #{declName}::#{proxyName}<TThreadPool>::Async#{methodName}(::grpc::ClientContext* context, const #{request methodInput}& request, std::function<void(const #{response methodResult}&, const ::grpc::Status&)> cb)
 {
-    ::bond::ext::gRPC::detail::client_unary_call_data< #{request methodInput}, #{response methodResult}, TThreadPool >* calldata = new ::bond::ext::gRPC::detail::client_unary_call_data< #{request methodInput}, #{response methodResult}, TThreadPool >(cb, threadPool_);
+    auto calldata = new ::bond::ext::gRPC::detail::client_unary_call_data< #{request methodInput}, #{response methodResult}, TThreadPool >(cb, threadPool_);
     calldata->dispatch(channel_.get(), ioManager_.get(), rpcmethod_#{methodName}_, context, request);
 }|]
         methodDecl Event{..} = [lt|/* TODO: stub implementation for event #{methodName} */|]

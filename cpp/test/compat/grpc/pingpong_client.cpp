@@ -93,8 +93,8 @@ int main()
 
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
-    std::unique_ptr<bond::ext::thread_pool> threadPool(new bond::ext::thread_pool());
-    PingPong::Client<bond::ext::thread_pool> client(channel, ioManager, threadPool.get());
+    bond::ext::thread_pool threadPool;
+    PingPong::Client client(channel, ioManager, &threadPool);
 
     printf("Start client\n");
     fflush(stdout);
