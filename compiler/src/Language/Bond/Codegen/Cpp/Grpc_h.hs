@@ -32,6 +32,7 @@ grpc_h _ cpp file imports declarations = ("_grpc.h", [lt|
 #include <bond/comm/message.h>
 #include <bond/ext/grpc/bond_utils.h>
 #include <bond/ext/grpc/io_manager.h>
+#include <bond/ext/grpc/thread_pool.h>
 #include <bond/ext/grpc/unary_call.h>
 #include <bond/ext/grpc/detail/client_call_data.h>
 #include <bond/ext/grpc/detail/service.h>
@@ -89,12 +90,13 @@ grpc_h _ cpp file imports declarations = ("_grpc.h", [lt|
 class #{declName} final
 {
 public:
+    template <typename TThreadPool>
     class #{proxyName}
     {
     public:
-        #{proxyName}(const std::shared_ptr< ::grpc::ChannelInterface>& channel, std::shared_ptr< ::bond::ext::gRPC::io_manager> ioManager);
+        #{proxyName}(const std::shared_ptr< ::grpc::ChannelInterface>& channel, std::shared_ptr< ::bond::ext::gRPC::io_manager> ioManager, TThreadPool* threadPool);
 
-        #{doubleLineSep 2 publicStubMethodDecl serviceMethods}
+        #{doubleLineSep 2 publicProxyMethodDecl serviceMethods}
 
         #{proxyName}(const #{proxyName}&) = delete;
         #{proxyName}& operator=(const #{proxyName}&) = delete;
@@ -105,9 +107,12 @@ public:
     private:
         std::shared_ptr< ::grpc::ChannelInterface> channel_;
         std::shared_ptr< ::bond::ext::gRPC::io_manager> ioManager_;
+        TThreadPool* threadPool_;
 
-        #{doubleLineSep 2 privateStubMethodDecl serviceMethods}
+        #{doubleLineSep 2 privateProxyMethodDecl serviceMethods}
     };
+
+    using Client = #{proxyName}< ::bond::ext::thread_pool>;
 
     class Service : public ::bond::ext::gRPC::detail::service
     {
@@ -125,21 +130,45 @@ public:
     private:
         #{newlineSep 2 serviceMethodReceiveData serviceMethods}
     };
-};|]
+};
+
+
+template <typename TThreadPool>
+inline #{declName}::#{proxyName}<TThreadPool>::#{proxyName}(const std::shared_ptr< ::grpc::ChannelInterface>& channel, std::shared_ptr< ::bond::ext::gRPC::io_manager> ioManager, TThreadPool* threadPool)
+    : channel_(channel)
+    , ioManager_(ioManager)
+    , threadPool_(threadPool)
+    #{newlineSep 1 proxyMethodMemberInit serviceMethods}
+    { }
+
+#{doubleLineSep 0 methodDecl serviceMethods}
+|]
       where
         methodNames :: [String]
         methodNames = map methodName serviceMethods
 
-        proxyName = declName ++ "Client"
+        proxyName :: String
+        proxyName = "ClientCore"
 
         serviceMethodsWithIndex :: [(Integer,Method)]
         serviceMethodsWithIndex = zip [0..] serviceMethods
 
-        publicStubMethodDecl Function{..} = [lt|void Async#{methodName}(::grpc::ClientContext* context, const #{request methodInput}& request, std::function<void(const #{response methodResult}&, const ::grpc::Status&)> cb);|]
-        publicStubMethodDecl Event{..} = [lt|/* TODO stub implementation (public) for event #{methodName} */|]
+        publicProxyMethodDecl Function{..} = [lt|void Async#{methodName}(::grpc::ClientContext* context, const #{request methodInput}& request, std::function<void(const #{response methodResult}&, const ::grpc::Status&)> cb);|]
+        publicProxyMethodDecl Event{..} = [lt|/* TODO stub implementation (public) for event #{methodName} */|]
 
-        privateStubMethodDecl Function{..} = [lt|const ::grpc::RpcMethod rpcmethod_#{methodName}_;|]
-        privateStubMethodDecl Event{..} = [lt|/* TODO stub implementation (private) for event #{methodName} */|]
+        privateProxyMethodDecl Function{..} = [lt|const ::grpc::RpcMethod rpcmethod_#{methodName}_;|]
+        privateProxyMethodDecl Event{..} = [lt|/* TODO stub implementation (private) for event #{methodName} */|]
+
+        proxyMethodMemberInit Function{..} = [lt|, rpcmethod_#{methodName}_("/#{getDeclTypeName idl s}/#{methodName}", ::grpc::RpcMethod::NORMAL_RPC, channel)|]
+        proxyMethodMemberInit Event{..} = [lt|/* TODO stub ctor initialization for event #{methodName} */|]
+
+        methodDecl Function{..} = [lt|template <typename TThreadPool>
+inline void #{declName}::#{proxyName}<TThreadPool>::Async#{methodName}(::grpc::ClientContext* context, const #{request methodInput}& request, std::function<void(const #{response methodResult}&, const ::grpc::Status&)> cb)
+{
+    auto calldata = new ::bond::ext::gRPC::detail::client_unary_call_data< #{request methodInput}, #{response methodResult}, TThreadPool >(cb, threadPool_);
+    calldata->dispatch(channel_.get(), ioManager_.get(), rpcmethod_#{methodName}_, context, request);
+}|]
+        methodDecl Event{..} = [lt|/* TODO: stub implementation for event #{methodName} */|]
 
         serviceAddMethod Function{..} = [lt|AddMethod("/#{getDeclTypeName idl s}/#{methodName}");|]
         serviceAddMethod Event{..} = [lt|AddMethod("/#{getDeclTypeName idl s}/#{methodName}");|]

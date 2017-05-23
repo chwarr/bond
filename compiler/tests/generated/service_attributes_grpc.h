@@ -8,6 +8,7 @@
 #include <bond/comm/message.h>
 #include <bond/ext/grpc/bond_utils.h>
 #include <bond/ext/grpc/io_manager.h>
+#include <bond/ext/grpc/thread_pool.h>
 #include <bond/ext/grpc/unary_call.h>
 #include <bond/ext/grpc/detail/client_call_data.h>
 #include <bond/ext/grpc/detail/service.h>
@@ -38,25 +39,29 @@ namespace tests
 class Foo final
 {
 public:
-    class FooClient
+    template <typename TThreadPool>
+    class ClientCore
     {
     public:
-        FooClient(const std::shared_ptr< ::grpc::ChannelInterface>& channel, std::shared_ptr< ::bond::ext::gRPC::io_manager> ioManager);
+        ClientCore(const std::shared_ptr< ::grpc::ChannelInterface>& channel, std::shared_ptr< ::bond::ext::gRPC::io_manager> ioManager, TThreadPool* threadPool);
 
         void Asyncfoo(::grpc::ClientContext* context, const ::bond::comm::message< ::tests::Param>& request, std::function<void(const ::bond::comm::message< ::tests::Result>&, const ::grpc::Status&)> cb);
 
-        FooClient(const FooClient&) = delete;
-        FooClient& operator=(const FooClient&) = delete;
+        ClientCore(const ClientCore&) = delete;
+        ClientCore& operator=(const ClientCore&) = delete;
 
-        FooClient(FooClient&&) = default;
-        FooClient& operator=(FooClient&&) = default;
+        ClientCore(ClientCore&&) = default;
+        ClientCore& operator=(ClientCore&&) = default;
 
     private:
         std::shared_ptr< ::grpc::ChannelInterface> channel_;
         std::shared_ptr< ::bond::ext::gRPC::io_manager> ioManager_;
+        TThreadPool* threadPool_;
 
         const ::grpc::RpcMethod rpcmethod_foo_;
     };
+
+    using Client = ClientCore< ::bond::ext::thread_pool>;
 
     class Service : public ::bond::ext::gRPC::detail::service
     {
@@ -82,6 +87,23 @@ public:
         boost::optional<::bond::ext::gRPC::detail::service_unary_call_data<::bond::comm::message< ::tests::Param>, ::bond::comm::message< ::tests::Result>>> _rd_foo;
     };
 };
+
+
+template <typename TThreadPool>
+inline Foo::ClientCore<TThreadPool>::ClientCore(const std::shared_ptr< ::grpc::ChannelInterface>& channel, std::shared_ptr< ::bond::ext::gRPC::io_manager> ioManager, TThreadPool* threadPool)
+    : channel_(channel)
+    , ioManager_(ioManager)
+    , threadPool_(threadPool)
+    , rpcmethod_foo_("/tests.Foo/foo", ::grpc::RpcMethod::NORMAL_RPC, channel)
+    { }
+
+template <typename TThreadPool>
+inline void Foo::ClientCore<TThreadPool>::Asyncfoo(::grpc::ClientContext* context, const ::bond::comm::message< ::tests::Param>& request, std::function<void(const ::bond::comm::message< ::tests::Result>&, const ::grpc::Status&)> cb)
+{
+    auto calldata = new ::bond::ext::gRPC::detail::client_unary_call_data< ::bond::comm::message< ::tests::Param>, ::bond::comm::message< ::tests::Result>, TThreadPool >(cb, threadPool_);
+    calldata->dispatch(channel_.get(), ioManager_.get(), rpcmethod_foo_, context, request);
+}
+
 
 } // namespace tests
 
