@@ -46,7 +46,7 @@ namespace bond { namespace ext { namespace gRPC {
         /// @param cq the completion queue to poll. Takes ownership.
         ///
         /// @param numThreads the number of threads to start. If
-        /// \ref USE_HARDWARE_CONC, then anumber of threads depending on the
+        /// \ref USE_HARDWARE_CONC, then a number of threads depending on the
         // hardware's available concurrency will be started.
         explicit io_manager(std::unique_ptr<grpc::CompletionQueue> cq, size_t numThreads = USE_HARDWARE_CONC)
             : _cq(std::move(cq)),
