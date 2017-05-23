@@ -51,6 +51,7 @@
               BOND_VS_NUM: 14
               BOND_ARCH: 64
               BOND_BOOST: 63
+              BOND_GRPC: "true"
               BOND_CMAKE_FLAGS: "-DBOND_ENABLE_COMM=FALSE;-DBOND_SKIP_CORE_TESTS=TRUE;-DBOND_SKIP_GBC_TESTS=TRUE"
             - BOND_BUILD: C#
               BOND_OUTPUT: Properties
@@ -113,6 +114,14 @@
 
             }
 
+            if ($env:BOND_GRPC -eq "true") {
+
+                choco install ninja -y
+
+                choco install yasm -y
+
+            }
+
     cache:
         - cs\packages -> cs\test\core\packages.config
         - compiler\.cabal-sandbox -> compiler\bond.cabal
@@ -160,11 +169,34 @@
 
                 msbuild cs\cs.sln /verbosity:minimal /target:Tests\Compat /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
 
+                if ($env:BOND_GRPC -eq "true") {
+
+                    $cmakeFlags += "-Wno-dev"
+
+                    $cmakeGenerator = "Ninja"
+
+                    $env:mingw_path = ($env:Path.Split(';') | Where-Object { $_ -like "*haskell*mingw*" }) -join ';'
+
+                    $env:Path = ($env:Path.Split(';') | Where-Object { $_ -notlike "*mingw*" -and $_ -notlike "*llvm*" }) -join ';'
+
+                    pushd "C:\Program Files (x86)\Microsoft Visual Studio ${env:BOND_VS_NUM}.0\VC"
+
+                    cmd /c "vcvarsall.bat x${env:BOND_ARCH} & set" |
+                    foreach {
+                        if ($_ -match "=") {
+                            $v = $_.split("="); set-item -force -path "ENV:\$($v[0])"  -value "$($v[1])"
+                        }
+                    }
+
+                    popd
+
+                }
+
                 mkdir build
 
                 cd build
 
-                cmake $cmakeFlags -G $cmakeGenerator ..
+                cmake $cmakeFlags -G $cmakeGenerator .. ; ls
 
             }
 
@@ -224,7 +256,18 @@
 
             if ($env:BOND_BUILD -eq "C++") {
 
-                cmake --build . --target check -- /verbosity:minimal /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+                if ($env:BOND_GRPC -eq "true") {
+
+                    $env:Path = "${env:Path};${env:mingw_path}"
+
+                    cmake --build . --target check
+
+                }
+                else {
+
+                    cmake --build . --target check -- /verbosity:minimal /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+
+                }
 
             }
 
