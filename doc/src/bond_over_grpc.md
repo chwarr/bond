@@ -51,10 +51,10 @@ The key parts of the generated C# stub code are:
 * A class with the name of the service (e.g.: `Example`), which encloses
   the server-side service stub, the client-side proxy stub, and some static
   methods and data members for initialization
-* The service stub, which named with the name of the service plus the suffix
+* The service stub, which is named with the name of the service plus the suffix
   `Base` (e.g.: `Example.ExampleBase`). This service stub has
   abstract methods for each of the methods defined in the service IDL.
-* The proxy stub, which named with the name of the service plus the suffix
+* The proxy stub, which is named with the name of the service plus the suffix
   `Client' (e.g.: `Example.ExampleClient`).
 
 The service stub allows for the definition of the service implementation, with
@@ -73,11 +73,11 @@ the application business logic:
         }
     }
 
-This service implementation is hooked up to a gGPC server as follows:
+This service implementation is hooked up to a gRPC server as follows:
 
     var server = new Grpc.Core.Server
     {
-	Services = { Example.BindService(new ExampleServiceImpl()) },
+        Services = { Example.BindService(new ExampleServiceImpl()) },
         Ports = { new Grpc.Core.ServerPort(ExampleHost, ExamplePort, Grpc.Core.ServerCredentials.Insecure) }
     };
     server.Start();
