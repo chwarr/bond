@@ -283,8 +283,14 @@ enum = Enum <$> asks currentNamespaces <*> attributes <*> name <*> consts <* opt
   where
     name = keyword "enum" *> (identifier <?> "enum identifier")
     consts = braces (semiOrCommaSepEnd1 constant <?> "enum constant")
-    constant = Constant <$> identifier <*> optional value
-    value = equal *> (fromIntegral <$> integer)
+    constant = Constant <$> identifier <*> value
+    value = do
+      maybeVal <- optional (equal *> integer)
+      case maybeVal of
+           Nothing -> return Nothing
+           Just v -> if v >= (toInteger (minBound :: Int32)) && v <= (toInteger (maxBound :: Word32))
+                        then return (Just (fromInteger v))
+                        else fail "Enum constant must be within the range -2147483648 to 4294967295"
 
 -- basic types parser
 basicType :: Parser Type

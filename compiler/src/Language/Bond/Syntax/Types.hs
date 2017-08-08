@@ -38,7 +38,8 @@ module Language.Bond.Syntax.Types
     , Language(..)
     ) where
 
-import Data.Word
+import Data.Word(Word16)
+import Data.Int(Int32)
 
 -- | Represents fully qualified name
 type QualifiedName = [String]
@@ -66,7 +67,7 @@ data Type =
     BT_Set Type |
     BT_Map Type Type |
     BT_Bonded Type |
-    BT_IntTypeArg Int |                     -- ^ an integer argument in an instance of a generic type 'Alias'
+    BT_IntTypeArg Integer |                 -- ^ an integer argument in an instance of a generic type 'Alias'
     BT_TypeParam TypeParam |                -- ^ type parameter of a generic 'Struct' or 'Alias' declaration
     BT_UserDefined Declaration [Type]       -- ^ user defined type or an instance of a generic type with the specified type arguments
     deriving (Eq, Show)
@@ -104,8 +105,8 @@ data Field =
 -- | Definition of an 'Enum' constant.
 data Constant =
     Constant
-        { constantName :: String            -- enum constant name
-        , constantValue :: Maybe Int        -- optional constant value
+        { constantName :: String           -- enum constant name
+        , constantValue :: Maybe Int32     -- optional constant value
         }
     deriving (Eq, Show)
 

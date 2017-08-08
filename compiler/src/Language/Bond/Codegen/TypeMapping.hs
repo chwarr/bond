@@ -230,6 +230,9 @@ infixr 6 <<>
 pureText :: ToText a => a -> TypeNameBuilder
 pureText = pure . toText
 
+integerToText :: Integer -> TypeNameBuilder
+integerToText = pure . toText . show
+
 commaSepTypeNames :: [Type] -> TypeNameBuilder
 commaSepTypeNames [] = return mempty
 commaSepTypeNames [x] = typeName x
@@ -321,7 +324,7 @@ idlType BT_WString = pure "wstring"
 idlType BT_MetaName = pure "bond_meta::name"
 idlType BT_MetaFullName = pure "bond_meta::full_name"
 idlType BT_Blob = pure "blob"
-idlType (BT_IntTypeArg x) = pureText x
+idlType (BT_IntTypeArg x) = integerToText x
 idlType (BT_Maybe type_) = elementTypeName type_
 idlType (BT_List element) = "list<" <>> elementTypeName element <<> ">"
 idlType (BT_Nullable element) = "nullable<" <>> elementTypeName element <<> ">"
@@ -351,7 +354,7 @@ cppType BT_WString = pure "std::wstring"
 cppType BT_MetaName = pure "std::string"
 cppType BT_MetaFullName = pure "std::string"
 cppType BT_Blob = pure "::bond::blob"
-cppType (BT_IntTypeArg x) = pureText x
+cppType (BT_IntTypeArg x) = integerToText x
 cppType (BT_Maybe type_) = "::bond::maybe<" <>> elementTypeName type_ <<> ">"
 cppType (BT_List element) = "std::list<" <>> elementTypeName element <<> ">"
 cppType (BT_Nullable element) = "::bond::nullable<" <>> elementTypeName element <<> ">"
@@ -417,7 +420,7 @@ csType BT_WString = pure "string"
 csType BT_MetaName = pure "string"
 csType BT_MetaFullName = pure "string"
 csType BT_Blob = pure "System.ArraySegment<byte>"
-csType (BT_IntTypeArg x) = pureText x
+csType (BT_IntTypeArg x) = integerToText x
 csType (BT_Maybe type_) = csType (BT_Nullable type_)
 csType (BT_Nullable element) = typeName element <<> if isScalar element then "?" else mempty
 csType (BT_List element) = "LinkedList<" <>> elementTypeName element <<> ">"
