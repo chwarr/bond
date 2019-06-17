@@ -26,8 +26,13 @@ RUN ["zsh", "/root/build_boosts.zsh"]
 RUN apt-get -y install \
     ccache \
     clang \
-    cmake \
     golang
+
+# Install CMake from Kitware directly. The version that comes with Ubuntu
+# 16.04 LTS is getting to old to build gRPC.
+ADD install_cmake.zsh /root/
+RUN ["zsh", "/root/install_cmake.zsh"]
+ENV PATH /opt/cmake/bin:${PATH}
 
 # Components for Haskell. See https://docs.haskellstack.org/en/stable/install_and_upgrade/#linux
 RUN wget -qO- https://get.haskellstack.org/ | sh
