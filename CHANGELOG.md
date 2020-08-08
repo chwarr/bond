@@ -11,6 +11,18 @@ tag versions. The Bond compiler (`gbc`) and
 different versioning scheme, following the Haskell community's
 [package versioning policy](https://wiki.haskell.org/Package_versioning_policy).
 
+## Unreleased ##
+
+* IDL core version: TBD
+* C++ version: bug fix bump needed
+* C# NuGet version: TBD
+* `gbc` & compiler library: TBD
+
+### C++ ###
+
+* Throw an exception when an overly long var int is detected instead of
+  continuing to read as long at the continuation bit is set.
+
 ## 9.0.3: 2020-08-06 ##
 
 * IDL core version: 3.0

@@ -131,6 +131,7 @@ add_unit_test (cmdargs.cpp)
 add_unit_test (container_extensibility.cpp
     associative_container_extensibility.cpp)
 add_unit_test (custom_protocols.cpp)
+add_unit_test (encoding_test.cpp)
 add_unit_test (enum_conversions.cpp)
 add_unit_test (exception_tests.cpp)
 add_unit_test (generics_test.cpp)

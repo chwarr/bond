@@ -7,6 +7,7 @@
 
 #include <bond/core/blob.h>
 #include <bond/core/containers.h>
+#include <bond/core/exception.h>
 
 #include <exception>
 #include <stdio.h>
@@ -103,8 +104,13 @@ template<typename Buffer, typename T>
 BOND_NO_INLINE
 void GenericReadVariableUnsigned(Buffer& input, T& value)
 {
+    BOOST_STATIC_ASSERT(std::is_unsigned<T>::value);
+
     value = 0;
     uint8_t byte;
+    // Var ints are 7-bit encoded. The + 7 is so that we round up to the
+    // next byte.
+    uint32_t max_bytes_to_read = ((sizeof(T) * 8) + 7) / 7;
     uint32_t shift = 0;
 
     do
@@ -113,9 +119,21 @@ void GenericReadVariableUnsigned(Buffer& input, T& value)
 
         T part = byte & 0x7f;
         value += part << shift;
+
+        --max_bytes_to_read;
         shift += 7;
     }
-    while(byte >= 0x80);
+    while(byte >= 0x80 && max_bytes_to_read > 0);
+
+    if (byte >= 0x80 && max_bytes_to_read == 0)
+    {
+        // The most recent byte read has the continuation bit set, but we've
+        // already read the maximum number of bytes for the width of the var
+        // int.
+        BOND_THROW(
+            StreamException,
+            "Detected too long encoded varint. Varint size: " << sizeof(T));
+    }
 }
 
 
